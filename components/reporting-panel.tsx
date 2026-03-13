@@ -1,3 +1,4 @@
+import { describePriority, isHighPriority } from '@/lib/scoring'
 import type { InquiryTest, Prospect } from '@/lib/types'
 
 export function ReportingPanel({ prospects, inquiryTests }: { prospects: Prospect[]; inquiryTests: InquiryTest[] }) {
@@ -6,7 +7,7 @@ export function ReportingPanel({ prospects, inquiryTests }: { prospects: Prospec
     return acc
   }, {})
 
-  const highPriority = prospects.filter((prospect) => prospect.priorityScore >= 4)
+  const highPriority = prospects.filter((prospect) => isHighPriority(prospect))
   const gradedTests = inquiryTests.filter((test) => test.grade)
 
   return (
@@ -54,7 +55,7 @@ export function ReportingPanel({ prospects, inquiryTests }: { prospects: Prospec
             <div key={prospect.id} style={{ borderTop: '1px solid #e7ebf3', paddingTop: 12 }}>
               <strong>{prospect.businessName}</strong>
               <div className="muted">Site {prospect.siteScore} • Intake {prospect.intakeScore} • Owner fit {prospect.ownerFitScore} • Offer fit {prospect.fitScore}</div>
-              <div className="muted">Reason: {prospect.priorityReason}</div>
+              <div className="muted">Reason: {describePriority(prospect)}</div>
             </div>
           ))}
         </div>

@@ -13,13 +13,17 @@ function writeData(data: SalesOsData) {
   fs.writeFileSync(dataFile, JSON.stringify(data, null, 2))
 }
 
+function createTimestampedId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraft[] {
   const now = new Date().toISOString()
   const drafts: FollowUpDraft[] = []
 
   if (outcome === 'no_answer' || outcome === 'left_voicemail') {
     drafts.push({
-      id: `fu-${Date.now()}-email`,
+      id: createTimestampedId('fu-email'),
       prospectId: prospect.id,
       trigger: outcome,
       channel: 'email',
@@ -29,7 +33,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       createdAt: now,
     })
     drafts.push({
-      id: `fu-${Date.now()}-sms`,
+      id: createTimestampedId('fu-sms'),
       prospectId: prospect.id,
       trigger: outcome,
       channel: 'sms',
@@ -41,7 +45,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
 
   if (outcome === 'spoke_with_owner' || outcome === 'interested' || outcome === 'send_info') {
     drafts.push({
-      id: `fu-${Date.now()}-email`,
+      id: createTimestampedId('fu-email'),
       prospectId: prospect.id,
       trigger: outcome,
       channel: 'email',
@@ -51,7 +55,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       createdAt: now,
     })
     drafts.push({
-      id: `fu-${Date.now()}-sms`,
+      id: createTimestampedId('fu-sms'),
       prospectId: prospect.id,
       trigger: outcome,
       channel: 'sms',
@@ -80,7 +84,7 @@ export async function logCallOutcome(formData: FormData) {
   if (!prospect) return
 
   data.calls.unshift({
-    id: `call-${Date.now()}`,
+    id: createTimestampedId('call'),
     prospectId,
     outcome,
     notes,
@@ -130,7 +134,7 @@ export async function createProspect(formData: FormData) {
   'use server'
   const data = readData()
   const prospect: Prospect = {
-    id: `p-${Date.now()}`,
+    id: createTimestampedId('prospect'),
     businessName: String(formData.get('businessName') || ''),
     market: String(formData.get('market') || ''),
     niche: String(formData.get('niche') || ''),
@@ -201,7 +205,7 @@ export async function sendBookingLink(formData: FormData) {
     existing.status = 'booking_sent'
   } else {
     const meeting: MeetingRecord = {
-      id: `meeting-${Date.now()}`,
+      id: createTimestampedId('meeting'),
       prospectId,
       rep: prospect.assignedRep,
       bookingUrl,
@@ -231,7 +235,7 @@ export async function createProposal(formData: FormData) {
     existing.status = 'sent'
   } else {
     const proposal: ProposalRecord = {
-      id: `proposal-${Date.now()}`,
+      id: createTimestampedId('proposal'),
       prospectId,
       offerSummary,
       paymentLink,
