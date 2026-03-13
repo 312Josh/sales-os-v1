@@ -1,0 +1,259 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { revalidatePath } from 'next/cache'
+import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
+
+const dataFile = path.join(process.cwd(), 'data', 'seed.json')
+
+function readData(): SalesOsData {
+  return JSON.parse(fs.readFileSync(dataFile, 'utf8')) as SalesOsData
+}
+
+function writeData(data: SalesOsData) {
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2))
+}
+
+function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraft[] {
+  const now = new Date().toISOString()
+  const drafts: FollowUpDraft[] = []
+
+  if (outcome === 'no_answer' || outcome === 'left_voicemail') {
+    drafts.push({
+      id: `fu-${Date.now()}-email`,
+      prospectId: prospect.id,
+      trigger: outcome,
+      channel: 'email',
+      subject: `Tried to reach ${prospect.businessName}`,
+      message: `Hey ${prospect.decisionMaker || 'there'}, I just tried calling. Quick reason for the outreach: ${prospect.outreachHook} If useful, I can send a few ideas and a quick booking link.`,
+      status: 'draft',
+      createdAt: now,
+    })
+    drafts.push({
+      id: `fu-${Date.now()}-sms`,
+      prospectId: prospect.id,
+      trigger: outcome,
+      channel: 'sms',
+      message: `Just tried calling — quick reason for the outreach: ${prospect.weakIntakeSignal} Happy to send a few ideas if helpful.`,
+      status: 'draft',
+      createdAt: now,
+    })
+  }
+
+  if (outcome === 'spoke_with_owner' || outcome === 'interested' || outcome === 'send_info') {
+    drafts.push({
+      id: `fu-${Date.now()}-email`,
+      prospectId: prospect.id,
+      trigger: outcome,
+      channel: 'email',
+      subject: `${prospect.businessName} follow-up recap`,
+      message: `Good talking today. Based on what we discussed, the clearest gap is: ${prospect.weakIntakeSignal} The simplest next step is a short walkthrough and booking conversation.`,
+      status: 'draft',
+      createdAt: now,
+    })
+    drafts.push({
+      id: `fu-${Date.now()}-sms`,
+      prospectId: prospect.id,
+      trigger: outcome,
+      channel: 'sms',
+      message: `Good speaking today — I can show you a faster path from inbound interest to booked conversation. Want the booking link?`,
+      status: 'draft',
+      createdAt: now,
+    })
+  }
+
+  return drafts
+}
+
+export function getSalesOsData() {
+  return readData()
+}
+
+export async function logCallOutcome(formData: FormData) {
+  'use server'
+
+  const prospectId = String(formData.get('prospectId'))
+  const outcome = String(formData.get('outcome')) as CallOutcome
+  const notes = String(formData.get('notes') || '')
+  const nextStep = String(formData.get('nextStep') || '')
+  const data = readData()
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (!prospect) return
+
+  data.calls.unshift({
+    id: `call-${Date.now()}`,
+    prospectId,
+    outcome,
+    notes,
+    nextStep,
+    calledAt: new Date().toISOString(),
+  })
+
+  const stageMap: Record<CallOutcome, PipelineStage> = {
+    no_answer: 'called',
+    left_voicemail: 'called',
+    gatekeeper: 'called',
+    wrong_number: 'closed_lost',
+    spoke_with_owner: 'called',
+    spoke_with_staff: 'called',
+    interested: 'follow_up_sent',
+    not_interested: 'closed_lost',
+    send_info: 'follow_up_sent',
+    book_meeting: 'meeting_booked',
+    follow_up_later: 'called',
+  }
+
+  prospect.pipelineStage = stageMap[outcome]
+  if (notes) {
+    prospect.notes = [prospect.notes, notes].filter(Boolean).join(' | ')
+  }
+
+  const drafts = createFollowUps(prospect, outcome)
+  data.followUps = [...drafts, ...data.followUps]
+
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function updateProspectStage(formData: FormData) {
+  'use server'
+  const prospectId = String(formData.get('prospectId'))
+  const stage = String(formData.get('pipelineStage')) as PipelineStage
+  const data = readData()
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (!prospect) return
+  prospect.pipelineStage = stage
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function createProspect(formData: FormData) {
+  'use server'
+  const data = readData()
+  const prospect: Prospect = {
+    id: `p-${Date.now()}`,
+    businessName: String(formData.get('businessName') || ''),
+    market: String(formData.get('market') || ''),
+    niche: String(formData.get('niche') || ''),
+    city: String(formData.get('city') || ''),
+    suburb: String(formData.get('suburb') || ''),
+    website: String(formData.get('website') || ''),
+    phone: String(formData.get('phone') || ''),
+    contactFormUrl: String(formData.get('contactFormUrl') || ''),
+    decisionMaker: String(formData.get('decisionMaker') || ''),
+    linkedInUrl: String(formData.get('linkedInUrl') || ''),
+    weakSiteSignal: String(formData.get('weakSiteSignal') || ''),
+    weakIntakeSignal: String(formData.get('weakIntakeSignal') || ''),
+    noChatSignal: String(formData.get('noChatSignal') || '') === 'on',
+    noBookingSignal: String(formData.get('noBookingSignal') || '') === 'on',
+    ownerOperatedSignal: String(formData.get('ownerOperatedSignal') || ''),
+    auditSummary: String(formData.get('auditSummary') || ''),
+    outreachHook: String(formData.get('outreachHook') || ''),
+    siteScore: Number(formData.get('siteScore') || 3),
+    intakeScore: Number(formData.get('intakeScore') || 3),
+    ownerFitScore: Number(formData.get('ownerFitScore') || 3),
+    fitScore: Number(formData.get('fitScore') || 3),
+    priorityScore: Number(formData.get('priorityScore') || 3),
+    priorityReason: String(formData.get('priorityReason') || 'New prospect added without full scoring yet.'),
+    pipelineStage: 'sourced',
+    assignedRep: String(formData.get('assignedRep') || 'Josh') as 'Josh' | 'Paul',
+    notes: String(formData.get('notes') || ''),
+  }
+  data.prospects.unshift(prospect)
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function importProspects(formData: FormData) {
+  'use server'
+  const raw = String(formData.get('json') || '[]')
+  const parsed = JSON.parse(raw) as Prospect[]
+  const data = readData()
+  for (const item of parsed) {
+    data.prospects.push({
+      ...item,
+      id: item.id || `p-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    })
+  }
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function approveFollowUp(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const data = readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  followUp.status = 'approved'
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function sendBookingLink(formData: FormData) {
+  'use server'
+  const prospectId = String(formData.get('prospectId'))
+  const data = readData()
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (!prospect) return
+  const bookingUrl = data.bookingLinks[prospect.assignedRep]
+  const existing = data.meetings.find((meeting) => meeting.prospectId === prospectId)
+  if (existing) {
+    existing.status = 'booking_sent'
+  } else {
+    const meeting: MeetingRecord = {
+      id: `meeting-${Date.now()}`,
+      prospectId,
+      rep: prospect.assignedRep,
+      bookingUrl,
+      googleMeetUrl: `Pending via booking flow for ${prospect.assignedRep}`,
+      status: 'booking_sent',
+    }
+    data.meetings.unshift(meeting)
+  }
+  prospect.pipelineStage = 'meeting_booked'
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function createProposal(formData: FormData) {
+  'use server'
+  const prospectId = String(formData.get('prospectId'))
+  const offerSummary = String(formData.get('offerSummary') || '')
+  const paymentLink = String(formData.get('paymentLink') || '')
+  const data = readData()
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (!prospect) return
+
+  const existing = data.proposals.find((proposal) => proposal.prospectId === prospectId)
+  if (existing) {
+    existing.offerSummary = offerSummary
+    existing.paymentLink = paymentLink
+    existing.status = 'sent'
+  } else {
+    const proposal: ProposalRecord = {
+      id: `proposal-${Date.now()}`,
+      prospectId,
+      offerSummary,
+      paymentLink,
+      status: 'sent',
+    }
+    data.proposals.unshift(proposal)
+  }
+
+  prospect.pipelineStage = 'proposal_sent'
+  writeData(data)
+  revalidatePath('/')
+}
+
+export async function markProposalPaid(formData: FormData) {
+  'use server'
+  const proposalId = String(formData.get('proposalId'))
+  const data = readData()
+  const proposal = data.proposals.find((item) => item.id === proposalId)
+  if (!proposal) return
+  proposal.status = 'paid'
+  const prospect = data.prospects.find((item) => item.id === proposal.prospectId)
+  if (prospect) prospect.pipelineStage = 'paid'
+  writeData(data)
+  revalidatePath('/')
+}
