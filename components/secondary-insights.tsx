@@ -1,3 +1,4 @@
+import { BookingSyncPanel } from '@/components/booking-sync-panel'
 import { getFollowUpLabel, getFollowUpState } from '@/lib/follow-up-state'
 import type { CallLog, FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
 
@@ -35,6 +36,7 @@ export function SecondaryInsights({
           <span className="badge">Stale follow-up: {stale}</span>
         </div>
       </div>
+      <BookingSyncPanel prospects={prospects} meetings={meetings} />
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Recent signal</h3>
         <div className="stack">

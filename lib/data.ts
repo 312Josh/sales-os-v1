@@ -31,6 +31,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       subject: `Tried to reach ${prospect.businessName}`,
       message: `Hey ${prospect.decisionMaker || 'there'}, I just tried calling. Quick reason for the outreach: ${prospect.outreachHook} If useful, I can send a few ideas and a quick booking link.`,
       status: 'draft',
+      executionState: 'pending',
       createdAt: now,
     })
     drafts.push({
@@ -40,6 +41,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       channel: 'sms',
       message: `Just tried calling — quick reason for the outreach: ${prospect.weakIntakeSignal} Happy to send a few ideas if helpful.`,
       status: 'draft',
+      executionState: 'pending',
       createdAt: now,
     })
   }
@@ -53,6 +55,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       subject: `${prospect.businessName} follow-up recap`,
       message: `Good talking today. Based on what we discussed, the clearest gap is: ${prospect.weakIntakeSignal} The simplest next step is a short walkthrough and booking conversation.`,
       status: 'draft',
+      executionState: 'pending',
       createdAt: now,
     })
     drafts.push({
@@ -62,6 +65,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       channel: 'sms',
       message: `Good speaking today — I can show you a faster path from inbound interest to booked conversation. Want the booking link?`,
       status: 'draft',
+      executionState: 'pending',
       createdAt: now,
     })
   }
@@ -176,10 +180,23 @@ export async function approveFollowUp(formData: FormData) {
   const followUp = data.followUps.find((item) => item.id === followUpId)
   if (!followUp) return
   followUp.status = 'approved'
+  followUp.executionState = 'ready_to_send'
   await writeData(data)
   revalidatePath('/')
 }
 
+
+export async function markFollowUpSent(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const data = await readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  followUp.status = 'sent'
+  followUp.executionState = 'sent'
+  await writeData(data)
+  revalidatePath('/')
+}
 export async function sendBookingLink(formData: FormData) {
   'use server'
   const prospectId = String(formData.get('prospectId'))

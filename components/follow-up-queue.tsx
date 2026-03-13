@@ -1,5 +1,6 @@
 import { getFollowUpLabel, getFollowUpState } from '@/lib/follow-up-state'
 import { getPriorityWeight } from '@/lib/prioritization'
+import { getV2PriorityLabel, getV2PriorityScore } from '@/lib/v2-prioritization'
 import type { MeetingRecord } from '@/lib/types'
 import type { CallLog, FollowUpDraft, Prospect } from '@/lib/types'
 
@@ -14,7 +15,7 @@ export function FollowUpQueue({ prospects, calls, followUps, meetings }: { prosp
       const weight: Record<string, number> = { stale_follow_up: 0, needs_rep_follow_up: 1, waiting_on_prospect: 2, clear: 3 }
       const stateDelta = weight[a.state] - weight[b.state]
       if (stateDelta !== 0) return stateDelta
-      return getPriorityWeight(b.prospect, calls, followUps, meetings) - getPriorityWeight(a.prospect, calls, followUps, meetings)
+      return getV2PriorityScore(b.prospect, calls, followUps, meetings) - getV2PriorityScore(a.prospect, calls, followUps, meetings)
     })
 
   return (
@@ -26,6 +27,7 @@ export function FollowUpQueue({ prospects, calls, followUps, meetings }: { prosp
             <strong>{prospect.businessName}</strong>
             <div className="muted">{prospect.assignedRep} • {getFollowUpLabel(state)}</div>
             <div className="muted">{prospect.outreachHook}</div>
+            <div className="muted">Priority: {getV2PriorityLabel(prospect, calls, followUps, meetings)}</div>
           </a>
         ))}
       </div>

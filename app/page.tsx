@@ -84,7 +84,7 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
         </div>
         <div className="stack">
           {selectedProspect ? <ProspectDetail prospect={selectedProspect} calls={calls} /> : <div className="card">No prospects loaded.</div>}
-          {selectedProspect ? <FollowUpPanel prospect={selectedProspect} followUps={followUps} meeting={meeting} proposal={proposal} /> : null}
+          {selectedProspect ? <FollowUpPanel prospect={selectedProspect} followUps={followUps} meeting={meeting} /> : null}
         </div>
         <div>
           <SecondaryInsights calls={data.calls} followUps={data.followUps} meetings={data.meetings} prospects={data.prospects} />

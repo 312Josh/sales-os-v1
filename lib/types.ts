@@ -34,6 +34,15 @@ export type InquiryTest = {
 }
 
 export type Prospect = {
+  employeeBand?: string
+  serviceArea?: string
+  hasOnlineBooking?: boolean
+  responseRisk?: 'low' | 'medium' | 'high'
+  ownerEvidence?: string
+  localProofSummary?: string
+  idealPitchAngle?: string
+  callOpener?: string
+  enrichmentSummary?: string
   id: string
   businessName: string
   market: string
@@ -79,7 +88,8 @@ export type FollowUpDraft = {
   channel: 'email' | 'sms'
   subject?: string
   message: string
-  status: 'draft' | 'approved' | 'sent'
+  status: 'draft' | 'approved' | 'ready' | 'sent'
+  executionState?: 'pending' | 'ready_to_send' | 'sent'
   createdAt: string
 }
 

@@ -1,12 +1,13 @@
 import { getNextAction } from '@/lib/next-action'
 import { getPriorityReasonLine, getPriorityWeight } from '@/lib/prioritization'
+import { getV2PriorityLabel, getV2PriorityScore } from '@/lib/v2-prioritization'
 import type { CallLog, FollowUpDraft } from '@/lib/types'
 import type { MeetingRecord, Prospect } from '@/lib/types'
 
 export function CommandRail({ prospects, meetings, calls, followUps }: { prospects: Prospect[]; meetings: MeetingRecord[]; calls: CallLog[]; followUps: FollowUpDraft[] }) {
   const active = prospects
     .filter((p) => ['call_queued', 'called', 'follow_up_sent', 'meeting_booked'].includes(p.pipelineStage))
-    .sort((a, b) => getPriorityWeight(b, calls, followUps, meetings) - getPriorityWeight(a, calls, followUps, meetings))
+    .sort((a, b) => getV2PriorityScore(b, calls, followUps, meetings) - getV2PriorityScore(a, calls, followUps, meetings))
     .slice(0, 8)
 
   return (
@@ -20,6 +21,7 @@ export function CommandRail({ prospects, meetings, calls, followUps }: { prospec
               <strong>{prospect.businessName}</strong>
               <div className="muted">{prospect.assignedRep} • {prospect.pipelineStage}</div>
               <div className="muted">Next: {getNextAction(prospect, meeting)}</div>
+              <div className="muted">Priority: {getV2PriorityLabel(prospect, calls, followUps, meetings)}</div>
               <div className="muted">{getPriorityReasonLine(prospect, calls, followUps, meetings)}</div>
             </a>
           )

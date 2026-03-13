@@ -1,17 +1,15 @@
 import { getBookingNextAction, getBookingState, getBookingStateLabel } from '@/lib/booking-state'
-import { approveFollowUp, createProposal, markProposalPaid, sendBookingLink } from '@/lib/data'
-import type { FollowUpDraft, MeetingRecord, ProposalRecord, Prospect } from '@/lib/types'
+import { approveFollowUp, markFollowUpSent, sendBookingLink } from '@/lib/data'
+import type { FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
 
 export function FollowUpPanel({
   prospect,
   followUps,
-  meeting,
-  proposal,
+  meeting
 }: {
   prospect: Prospect
   followUps: FollowUpDraft[]
   meeting?: MeetingRecord
-  proposal?: ProposalRecord
 }) {
   return (
     <div className="stack">
@@ -32,10 +30,18 @@ export function FollowUpPanel({
                 <div className="muted" style={{ marginTop: 6 }}>
                   Email sending path is now standardized around Postmark. SMS execution remains deferred.
                 </div>
-                <form action={approveFollowUp} style={{ marginTop: 10 }}>
-                  <input type="hidden" name="followUpId" value={item.id} />
-                  <button className="secondary" type="submit">Mark approved</button>
-                </form>
+                <div className="row" style={{ marginTop: 10 }}>
+                  <form action={approveFollowUp}>
+                    <input type="hidden" name="followUpId" value={item.id} />
+                    <button className="secondary" type="submit">Mark approved</button>
+                  </form>
+                  {item.executionState === 'ready_to_send' ? (
+                    <form action={markFollowUpSent}>
+                      <input type="hidden" name="followUpId" value={item.id} />
+                      <button type="submit">Mark sent</button>
+                    </form>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>

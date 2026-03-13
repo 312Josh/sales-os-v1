@@ -38,7 +38,16 @@
       "intakeScore": 5,
       "ownerFitScore": 5,
       "fitScore": 5,
-      "priorityReason": "Owner-led HVAC shop with obvious intake friction and strong call-first upside."
+      "priorityReason": "Owner-led HVAC shop with obvious intake friction and strong call-first upside.",
+      "employeeBand": "5-15",
+      "serviceArea": "West suburbs",
+      "hasOnlineBooking": false,
+      "responseRisk": "medium",
+      "ownerEvidence": "Owner name appears in review replies and local about copy.",
+      "localProofSummary": "Established local business with enough trust proof to convert if intake improved.",
+      "idealPitchAngle": "Missed inbound demand from weak request flow and buried CTA.",
+      "callOpener": "You already look established enough to get calls, but the site makes quote requests harder than they need to be.",
+      "enrichmentSummary": "Owner-led HVAC operator in the west suburbs with weak intake flow, no booking, and strong fit for a conversion-focused pitch."
     },
     {
       "id": "p2",
@@ -67,7 +76,16 @@
       "intakeScore": 4,
       "ownerFitScore": 4,
       "fitScore": 4,
-      "priorityReason": "Professional-services target with polished branding but weak consult conversion path."
+      "priorityReason": "Professional-services target with polished branding but weak consult conversion path.",
+      "employeeBand": "5-10",
+      "serviceArea": "River North / downtown Chicago",
+      "hasOnlineBooking": true,
+      "responseRisk": "low",
+      "ownerEvidence": "Founder-led language and small team footprint.",
+      "localProofSummary": "Brand polish is strong, but proof and conversion support lag behind the visual quality.",
+      "idealPitchAngle": "Consult-path tightening for a high-consideration service.",
+      "callOpener": "The brand looks premium, but the path from interest to consult still feels heavier than it should.",
+      "enrichmentSummary": "Founder-led med spa with a polished front end but a softer-than-ideal consult conversion path."
     },
     {
       "id": "p3",
@@ -96,7 +114,16 @@
       "intakeScore": 5,
       "ownerFitScore": 5,
       "fitScore": 5,
-      "priorityReason": "Urgent-service plumbing operator with weak mobile intake and clear owner-led feel."
+      "priorityReason": "Urgent-service plumbing operator with weak mobile intake and clear owner-led feel.",
+      "employeeBand": "3-10",
+      "serviceArea": "Downers Grove and nearby suburbs",
+      "hasOnlineBooking": false,
+      "responseRisk": "medium",
+      "ownerEvidence": "Strong owner-led tone and limited-team positioning.",
+      "localProofSummary": "Feels like a real operator with urgency-demand fit but weak mobile intake.",
+      "idealPitchAngle": "Emergency-intent capture and faster request handling.",
+      "callOpener": "For a plumbing shop, the current mobile path gives urgent leads too many places to drop.",
+      "enrichmentSummary": "Urgent-service plumbing prospect with weak mobile intake, no booking, and strong owner-operator signals."
     }
   ],
   "calls": [],
