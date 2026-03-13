@@ -28,6 +28,9 @@ export function FollowUpPanel({
                 </div>
                 {item.subject ? <div className="muted">Subject: {item.subject}</div> : null}
                 <div className="muted" style={{ marginTop: 6 }}>{item.message}</div>
+                <div className="muted" style={{ marginTop: 6 }}>
+                  Email sending path is now standardized around Postmark. SMS execution remains deferred.
+                </div>
                 <form action={approveFollowUp} style={{ marginTop: 10 }}>
                   <input type="hidden" name="followUpId" value={item.id} />
                   <button className="secondary" type="submit">Mark approved</button>
@@ -41,17 +44,18 @@ export function FollowUpPanel({
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Booking handoff</h3>
         <div className="muted" style={{ marginBottom: 12 }}>
-          Route the next conversation to the assigned rep with a booking link. Google Meet is assumed to be handled through the booking layer.
+          Route the next conversation to the assigned rep with a real Cal.com booking link. Google Meet is handled by the booking layer.
         </div>
         <form action={sendBookingLink}>
           <input type="hidden" name="prospectId" value={prospect.id} />
-          <button type="submit">Send booking link for {prospect.assignedRep}</button>
+          <button type="submit">Prepare booking handoff for {prospect.assignedRep}</button>
         </form>
         {meeting ? (
           <div className="stack" style={{ marginTop: 12 }}>
             <div className="muted">Status: {meeting.status}</div>
-            <div className="muted">Booking URL: {meeting.bookingUrl}</div>
+            <div className="muted">Booking URL: <a href={meeting.bookingUrl} target="_blank">{meeting.bookingUrl}</a></div>
             <div className="muted">Meet handoff: {meeting.googleMeetUrl}</div>
+            <a href={meeting.bookingUrl} target="_blank"><button type="button">Open live booking page</button></a>
           </div>
         ) : null}
       </div>

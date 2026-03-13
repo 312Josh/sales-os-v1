@@ -1,16 +1,16 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import { revalidatePath } from 'next/cache'
+import { getDataProvider } from './providers'
+import { getCalcomBookingLink } from './calcom'
 import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
 
-const dataFile = path.join(process.cwd(), 'data', 'seed.json')
+const provider = getDataProvider()
 
-function readData(): SalesOsData {
-  return JSON.parse(fs.readFileSync(dataFile, 'utf8')) as SalesOsData
+async function readData(): Promise<SalesOsData> {
+  return await provider.read()
 }
 
-function writeData(data: SalesOsData) {
-  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2))
+async function writeData(data: SalesOsData) {
+  await provider.write(data)
 }
 
 function createTimestampedId(prefix: string) {
@@ -68,8 +68,8 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
   return drafts
 }
 
-export function getSalesOsData() {
-  return readData()
+export async function getSalesOsData() {
+  return await readData()
 }
 
 export async function logCallOutcome(formData: FormData) {
@@ -79,7 +79,7 @@ export async function logCallOutcome(formData: FormData) {
   const outcome = String(formData.get('outcome')) as CallOutcome
   const notes = String(formData.get('notes') || '')
   const nextStep = String(formData.get('nextStep') || '')
-  const data = readData()
+  const data = await readData()
   const prospect = data.prospects.find((item) => item.id === prospectId)
   if (!prospect) return
 
@@ -114,7 +114,7 @@ export async function logCallOutcome(formData: FormData) {
   const drafts = createFollowUps(prospect, outcome)
   data.followUps = [...drafts, ...data.followUps]
 
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
@@ -122,17 +122,17 @@ export async function updateProspectStage(formData: FormData) {
   'use server'
   const prospectId = String(formData.get('prospectId'))
   const stage = String(formData.get('pipelineStage')) as PipelineStage
-  const data = readData()
+  const data = await readData()
   const prospect = data.prospects.find((item) => item.id === prospectId)
   if (!prospect) return
   prospect.pipelineStage = stage
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
 export async function createProspect(formData: FormData) {
   'use server'
-  const data = readData()
+  const data = await readData()
   const prospect: Prospect = {
     id: createTimestampedId('prospect'),
     businessName: String(formData.get('businessName') || ''),
@@ -163,7 +163,7 @@ export async function createProspect(formData: FormData) {
     notes: String(formData.get('notes') || ''),
   }
   data.prospects.unshift(prospect)
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
@@ -171,35 +171,36 @@ export async function importProspects(formData: FormData) {
   'use server'
   const raw = String(formData.get('json') || '[]')
   const parsed = JSON.parse(raw) as Prospect[]
-  const data = readData()
+  const data = await readData()
   for (const item of parsed) {
     data.prospects.push({
       ...item,
       id: item.id || `p-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     })
   }
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
 export async function approveFollowUp(formData: FormData) {
   'use server'
   const followUpId = String(formData.get('followUpId'))
-  const data = readData()
+  const data = await readData()
   const followUp = data.followUps.find((item) => item.id === followUpId)
   if (!followUp) return
   followUp.status = 'approved'
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
 export async function sendBookingLink(formData: FormData) {
   'use server'
   const prospectId = String(formData.get('prospectId'))
-  const data = readData()
+  const data = await readData()
   const prospect = data.prospects.find((item) => item.id === prospectId)
   if (!prospect) return
-  const bookingUrl = data.bookingLinks[prospect.assignedRep]
+  const booking = await getCalcomBookingLink(prospect.assignedRep)
+  const bookingUrl = booking.bookingUrl
   const existing = data.meetings.find((meeting) => meeting.prospectId === prospectId)
   if (existing) {
     existing.status = 'booking_sent'
@@ -209,13 +210,13 @@ export async function sendBookingLink(formData: FormData) {
       prospectId,
       rep: prospect.assignedRep,
       bookingUrl,
-      googleMeetUrl: `Pending via booking flow for ${prospect.assignedRep}`,
+      googleMeetUrl: `Handled by Cal.com booking workflow for ${prospect.assignedRep}`,
       status: 'booking_sent',
     }
     data.meetings.unshift(meeting)
   }
   prospect.pipelineStage = 'meeting_booked'
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
@@ -224,7 +225,7 @@ export async function createProposal(formData: FormData) {
   const prospectId = String(formData.get('prospectId'))
   const offerSummary = String(formData.get('offerSummary') || '')
   const paymentLink = String(formData.get('paymentLink') || '')
-  const data = readData()
+  const data = await readData()
   const prospect = data.prospects.find((item) => item.id === prospectId)
   if (!prospect) return
 
@@ -245,19 +246,19 @@ export async function createProposal(formData: FormData) {
   }
 
   prospect.pipelineStage = 'proposal_sent'
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }
 
 export async function markProposalPaid(formData: FormData) {
   'use server'
   const proposalId = String(formData.get('proposalId'))
-  const data = readData()
+  const data = await readData()
   const proposal = data.proposals.find((item) => item.id === proposalId)
   if (!proposal) return
   proposal.status = 'paid'
   const prospect = data.prospects.find((item) => item.id === proposal.prospectId)
   if (prospect) prospect.pipelineStage = 'paid'
-  writeData(data)
+  await writeData(data)
   revalidatePath('/')
 }

@@ -2,17 +2,21 @@ import { CreateProspectForm } from '@/components/create-prospect-form'
 import { ProspectDetail } from '@/components/prospect-detail'
 import { FollowUpPanel } from '@/components/follow-up-panel'
 import { ReportingPanel } from '@/components/reporting-panel'
+import { ActionCenter } from '@/components/action-center'
+import { RecentActivity } from '@/components/recent-activity'
+import { StageDiscipline } from '@/components/stage-discipline'
+import { QuickFilters } from '@/components/quick-filters'
 import { getSalesOsData } from '@/lib/data'
+import { SALES_USERS } from '@/lib/users'
 
 export default function Home({ searchParams }: { searchParams?: Promise<{ prospectId?: string }> }) {
-  const data = getSalesOsData()
   const resolvedParams = searchParams ? undefined : undefined
   void resolvedParams
   return <PageContent initialProspectIdPromise={searchParams} />
 }
 
 async function PageContent({ initialProspectIdPromise }: { initialProspectIdPromise?: Promise<{ prospectId?: string }> }) {
-  const data = getSalesOsData()
+  const data = await getSalesOsData()
   const params = initialProspectIdPromise ? await initialProspectIdPromise : undefined
   const queue = [...data.prospects].sort((a, b) => b.priorityScore - a.priorityScore)
   const selectedProspect = queue.find((prospect) => prospect.id === params?.prospectId) ?? queue[0]
@@ -33,6 +37,20 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
         <div className="muted">Rep workflow shell for Josh and Paul — queue first, context first, fast logging first.</div>
       </div>
 
+
+      <div className="card" style={{ marginBottom: 18 }}>
+        <h2 style={{ marginTop: 0 }}>Active users</h2>
+        <div className="row">
+          {SALES_USERS.map((user) => (
+            <div key={user.id} className="badge" style={{ padding: '10px 14px' }}>
+              {user.name} • {user.role}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <QuickFilters prospects={data.prospects} />
+
       <div className="kpis">
         <div className="kpi"><div className="muted">Queued calls</div><strong>{queuedCount}</strong></div>
         <div className="kpi"><div className="muted">Follow-up sent</div><strong>{followUpCount}</strong></div>
@@ -41,7 +59,7 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
         <div className="kpi"><div className="muted">Inquiry tests</div><strong>{inquiryQueued}</strong></div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: '1.2fr 1fr 0.9fr' }}>
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 0.9fr 0.9fr 0.9fr 0.9fr' }}>
         <div className="stack">
           <div className="card">
             <h2 style={{ marginTop: 0 }}>Daily call queue</h2>
@@ -86,6 +104,15 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
         </div>
         <div>
           <ReportingPanel prospects={data.prospects} inquiryTests={data.inquiryTests} />
+        </div>
+        <div>
+          <ActionCenter prospects={data.prospects} meetings={data.meetings} />
+        </div>
+        <div>
+          <RecentActivity calls={data.calls} followUps={data.followUps} meetings={data.meetings} prospects={data.prospects} />
+        </div>
+        <div>
+          <StageDiscipline prospects={data.prospects} meetings={data.meetings} />
         </div>
       </div>
     </main>
