@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { getDataProvider } from './providers'
 import { getCalcomBookingLink } from './calcom'
+import { getStageForOutcome } from './next-step'
 import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
 
 const provider = getDataProvider()
@@ -92,21 +93,7 @@ export async function logCallOutcome(formData: FormData) {
     calledAt: new Date().toISOString(),
   })
 
-  const stageMap: Record<CallOutcome, PipelineStage> = {
-    no_answer: 'called',
-    left_voicemail: 'called',
-    gatekeeper: 'called',
-    wrong_number: 'closed_lost',
-    spoke_with_owner: 'called',
-    spoke_with_staff: 'called',
-    interested: 'follow_up_sent',
-    not_interested: 'closed_lost',
-    send_info: 'follow_up_sent',
-    book_meeting: 'meeting_booked',
-    follow_up_later: 'called',
-  }
-
-  prospect.pipelineStage = stageMap[outcome]
+  prospect.pipelineStage = getStageForOutcome(outcome)
   if (notes) {
     prospect.notes = [prospect.notes, notes].filter(Boolean).join(' | ')
   }

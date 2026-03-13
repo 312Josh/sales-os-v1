@@ -21,3 +21,9 @@ button.secondary { background: #e7ebf3; color: #1f2a44; }
 .kpi { background: white; padding: 16px; border-radius: 14px; box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06); }
 .kpi strong { display: block; font-size: 26px; margin-top: 4px; }
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
+
+.command-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.command-buttons button { padding: 8px 10px; font-size: 13px; }
+.compact-card { padding: 14px; }
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }

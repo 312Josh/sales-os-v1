@@ -1,16 +1,13 @@
-import { logCallOutcome, updateProspectStage } from '@/lib/data'
+import { updateProspectStage } from '@/lib/data'
+import { CallDispositionForm } from '@/components/call-disposition-form'
 import type { CallLog, Prospect } from '@/lib/types'
-
-const outcomes = [
-  'no_answer','left_voicemail','gatekeeper','wrong_number','spoke_with_owner','spoke_with_staff','interested','not_interested','send_info','book_meeting','follow_up_later'
-] as const
 
 const stages = ['sourced','audited','call_queued','called','follow_up_sent','meeting_booked','proposal_sent','paid','closed_lost'] as const
 
 export function ProspectDetail({ prospect, calls }: { prospect: Prospect; calls: CallLog[] }) {
   return (
     <div className="stack">
-      <div className="card">
+      <div className="card compact-card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ margin: '0 0 8px' }}>{prospect.businessName}</h2>
@@ -38,27 +35,7 @@ export function ProspectDetail({ prospect, calls }: { prospect: Prospect; calls:
         </div>
       </div>
 
-      <div className="card">
-        <h3 style={{ marginTop: 0 }}>Fast call outcome logger</h3>
-        <form action={logCallOutcome} className="stack">
-          <input type="hidden" name="prospectId" value={prospect.id} />
-          <label>
-            Outcome
-            <select name="outcome" defaultValue="no_answer">
-              {outcomes.map((outcome) => <option key={outcome} value={outcome}>{outcome}</option>)}
-            </select>
-          </label>
-          <label>
-            Call notes
-            <textarea name="notes" placeholder="What happened on the call?" />
-          </label>
-          <label>
-            Next step
-            <input name="nextStep" placeholder="Call back tomorrow at 9, send recap, etc." />
-          </label>
-          <button type="submit">Log outcome</button>
-        </form>
-      </div>
+      <CallDispositionForm prospect={prospect} />
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Update pipeline stage</h3>

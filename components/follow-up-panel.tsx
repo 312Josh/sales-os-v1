@@ -1,3 +1,4 @@
+import { getBookingNextAction, getBookingState, getBookingStateLabel } from '@/lib/booking-state'
 import { approveFollowUp, createProposal, markProposalPaid, sendBookingLink } from '@/lib/data'
 import type { FollowUpDraft, MeetingRecord, ProposalRecord, Prospect } from '@/lib/types'
 
@@ -52,7 +53,9 @@ export function FollowUpPanel({
         </form>
         {meeting ? (
           <div className="stack" style={{ marginTop: 12 }}>
-            <div className="muted">Status: {meeting.status}</div>
+            <div className="muted">Booking state: {getBookingStateLabel(getBookingState(prospect, meeting))}</div>
+            <div className="muted">Operational next step: {getBookingNextAction(getBookingState(prospect, meeting))}</div>
+            <div className="muted">Raw meeting status: {meeting.status}</div>
             <div className="muted">Booking URL: <a href={meeting.bookingUrl} target="_blank">{meeting.bookingUrl}</a></div>
             <div className="muted">Meet handoff: {meeting.googleMeetUrl}</div>
             <a href={meeting.bookingUrl} target="_blank"><button type="button">Open live booking page</button></a>
@@ -60,31 +63,7 @@ export function FollowUpPanel({
         ) : null}
       </div>
 
-      <div className="card">
-        <h3 style={{ marginTop: 0 }}>Proposal / payment handoff</h3>
-        <form action={createProposal} className="stack">
-          <input type="hidden" name="prospectId" value={prospect.id} />
-          <label>
-            Offer summary
-            <textarea name="offerSummary" placeholder="Website + call-support follow-up system, booking handoff, and pipeline cleanup for your team." defaultValue={proposal?.offerSummary || ''} />
-          </label>
-          <label>
-            Payment link
-            <input name="paymentLink" placeholder="https://buy.stripe.com/..." defaultValue={proposal?.paymentLink || ''} />
-          </label>
-          <button type="submit">Save proposal handoff</button>
-        </form>
-        {proposal ? (
-          <div className="stack" style={{ marginTop: 12 }}>
-            <div className="muted">Proposal status: {proposal.status}</div>
-            <div className="muted">Payment link: {proposal.paymentLink || 'Not added yet'}</div>
-            <form action={markProposalPaid}>
-              <input type="hidden" name="proposalId" value={proposal.id} />
-              <button className="secondary" type="submit">Mark paid</button>
-            </form>
-          </div>
-        ) : null}
-      </div>
+
     </div>
   )
 }
