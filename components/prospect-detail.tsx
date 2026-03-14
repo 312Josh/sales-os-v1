@@ -3,6 +3,7 @@ import { CallDispositionForm } from '@/components/call-disposition-form'
 import { EnrichmentPanel } from '@/components/enrichment-panel'
 import { HookPanel } from '@/components/hook-panel'
 import { InquiryTestPanel } from '@/components/inquiry-test-panel'
+import { InquiryAuditLog } from '@/components/inquiry-audit-log'
 import type { CallLog, Prospect } from '@/lib/types'
 
 const stages = ['sourced','audited','call_queued','called','follow_up_sent','meeting_booked','proposal_sent','paid','closed_lost'] as const
@@ -13,6 +14,7 @@ export function ProspectDetail({ prospect, calls, inquiryTest }: { prospect: Pro
       <EnrichmentPanel prospect={prospect} />
       <HookPanel prospect={prospect} />
       <InquiryTestPanel prospect={prospect} inquiryTest={inquiryTest} />
+      <InquiryAuditLog inquiryTest={inquiryTest} />
 
       <div className="card compact-card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
