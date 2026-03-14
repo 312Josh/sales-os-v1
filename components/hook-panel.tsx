@@ -1,4 +1,5 @@
 import { getCommercialRiskLine, getTalkTrack, getWhyThisMatters } from '@/lib/hook-generation'
+import { getSharperTalkTrack, getShortHook } from '@/lib/hook-quality'
 import type { Prospect } from '@/lib/types'
 
 export function HookPanel({ prospect }: { prospect: Prospect }) {
@@ -8,7 +9,8 @@ export function HookPanel({ prospect }: { prospect: Prospect }) {
       <div className="stack">
         <div><strong>Why this matters:</strong><div className="muted">{getWhyThisMatters(prospect)}</div></div>
         <div><strong>Commercial risk:</strong><div className="muted">{getCommercialRiskLine(prospect)}</div></div>
-        <div><strong>Suggested talk track:</strong><div className="muted">{getTalkTrack(prospect)}</div></div>
+        <div><strong>Short hook:</strong><div className="muted">{getShortHook(prospect)}</div></div>
+        <div><strong>Suggested talk track:</strong><div className="muted">{getSharperTalkTrack(prospect)}</div></div>
       </div>
     </div>
   )

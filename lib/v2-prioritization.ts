@@ -11,13 +11,13 @@ export function getV2PriorityScore(prospect: Prospect, calls: CallLog[], followU
   score += prospect.fitScore * 8
   score += prospect.intakeScore * 6
   score += prospect.siteScore * 4
-  if (prospect.responseRisk === 'low') score += 10
-  if (prospect.responseRisk === 'high') score -= 5
-  if (prospect.hasOnlineBooking === false) score += 8
+  if (prospect.responseRisk === 'low') score += 12
+  if (prospect.responseRisk === 'high') score -= 8
+  if (prospect.hasOnlineBooking === false) score += 10
 
   if (followUpState === 'stale_follow_up') score += 100
   if (followUpState === 'needs_rep_follow_up') score += 65
-  if (followUpState === 'waiting_on_prospect') score += 20
+  if (followUpState === 'waiting_on_prospect') score += 15
 
   if (bookingSync === 'awaiting_calcom_completion') score += 35
   if (bookingSync === 'confirmed') score += 20
