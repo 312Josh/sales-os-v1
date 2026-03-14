@@ -99,6 +99,8 @@ export type FollowUpDraft = {
   providerId?: string
   sequenceStep?: number
   sequenceStatus?: 'active' | 'paused' | 'completed' | 'stopped'
+  manualSendStatus?: 'not_sent' | 'copied' | 'sent_manually'
+  stopReason?: 'reply' | 'booking' | 'manual'
   createdAt: string
 }
 

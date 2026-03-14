@@ -1,5 +1,5 @@
 import { getBookingNextAction, getBookingState, getBookingStateLabel } from '@/lib/booking-state'
-import { approveFollowUp, markFollowUpSent, sendBookingLink, stopFollowUpSequence } from '@/lib/data'
+import { approveFollowUp, markFollowUpCopied, markFollowUpSent, markFollowUpSentManually, sendBookingLink, sendFollowUpSms, stopFollowUpForBooking, stopFollowUpSequence } from '@/lib/data'
 import type { FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
 
 export function FollowUpPanel({
@@ -36,9 +36,22 @@ export function FollowUpPanel({
                     <button className="secondary" type="submit">Mark approved</button>
                   </form>
                   {item.executionState === 'ready_to_send' ? (
-                    <form action={markFollowUpSent}>
+                    <>
+                      <form action={markFollowUpCopied}>
+                        <input type="hidden" name="followUpId" value={item.id} />
+                        <button className="secondary" type="submit">Mark copied</button>
+                      </form>
+                      <form action={markFollowUpSentManually}>
+                        <input type="hidden" name="followUpId" value={item.id} />
+                        <button type="submit">Mark sent manually</button>
+                      </form>
+                    </>
+                  ) : null}
+                  {item.executionState === 'ready_to_send' && item.channel === 'sms' ? (
+                    <form action={sendFollowUpSms} className="row">
                       <input type="hidden" name="followUpId" value={item.id} />
-                      <button type="submit">Mark sent</button>
+                      <input name="testTo" placeholder="Safe test number only" />
+                      <button type="submit">Send test SMS</button>
                     </form>
                   ) : null}
                   {item.sequenceStatus !== 'stopped' && item.sequenceStatus !== 'completed' ? (
@@ -59,10 +72,16 @@ export function FollowUpPanel({
         <div className="muted" style={{ marginBottom: 12 }}>
           Route the next conversation to the assigned rep with a real Cal.com booking link. Google Meet is handled by the booking layer.
         </div>
-        <form action={sendBookingLink}>
+        <div className="row">
+          <form action={sendBookingLink}>
           <input type="hidden" name="prospectId" value={prospect.id} />
-          <button type="submit">Prepare booking handoff for {prospect.assignedRep}</button>
-        </form>
+            <button type="submit">Prepare booking handoff for {prospect.assignedRep}</button>
+          </form>
+          <form action={stopFollowUpForBooking}>
+            <input type="hidden" name="prospectId" value={prospect.id} />
+            <button className="secondary" type="submit">Stop follow-ups for booking</button>
+          </form>
+        </div>
         {meeting ? (
           <div className="stack" style={{ marginTop: 12 }}>
             <div className="muted">Booking state: {getBookingStateLabel(getBookingState(prospect, meeting))}</div>

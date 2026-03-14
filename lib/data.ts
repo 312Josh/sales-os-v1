@@ -3,6 +3,7 @@ import { getDataProvider } from './providers'
 import { getCalcomBookingLink } from './calcom'
 import { getStageForOutcome } from './next-step'
 import { autoGradeInquiry } from './inquiry-grading'
+import { sendTwilioSms } from './twilio'
 import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
 
 const provider = getDataProvider()
@@ -37,6 +38,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       sendStatus: 'queued',
       sequenceStep: 1,
       sequenceStatus: 'active',
+      manualSendStatus: 'not_sent',
       createdAt: now,
     })
     drafts.push({
@@ -51,6 +53,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       sendStatus: 'queued',
       sequenceStep: 1,
       sequenceStatus: 'active',
+      manualSendStatus: 'not_sent',
       createdAt: now,
     })
   }
@@ -69,6 +72,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       sendStatus: 'queued',
       sequenceStep: 1,
       sequenceStatus: 'active',
+      manualSendStatus: 'not_sent',
       createdAt: now,
     })
     drafts.push({
@@ -83,6 +87,7 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       sendStatus: 'queued',
       sequenceStep: 1,
       sequenceStatus: 'active',
+      manualSendStatus: 'not_sent',
       createdAt: now,
     })
   }
@@ -280,10 +285,31 @@ export async function markFollowUpSent(formData: FormData) {
   followUp.sendStatus = 'sent'
   followUp.sentAt = new Date().toISOString()
   followUp.sequenceStatus = 'completed'
+  followUp.manualSendStatus = 'sent_manually'
   await writeData(data)
   revalidatePath('/')
 }
 
+
+export async function sendFollowUpSms(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const testTo = String(formData.get('testTo') || '')
+  const data = await readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  if (!testTo) throw new Error('Test destination number required')
+  const result = await sendTwilioSms({ to: testTo, body: followUp.message })
+  followUp.status = 'sent'
+  followUp.executionState = 'sent'
+  followUp.sendStatus = 'sent'
+  followUp.sentAt = new Date().toISOString()
+  followUp.providerId = result.sid || ''
+  followUp.sequenceStatus = 'completed'
+  followUp.manualSendStatus = 'sent_manually'
+  await writeData(data)
+  revalidatePath('/')
+}
 export async function stopFollowUpSequence(formData: FormData) {
   'use server'
   const followUpId = String(formData.get('followUpId'))
@@ -291,6 +317,47 @@ export async function stopFollowUpSequence(formData: FormData) {
   const followUp = data.followUps.find((item) => item.id === followUpId)
   if (!followUp) return
   followUp.sequenceStatus = 'stopped'
+  followUp.stopReason = 'manual'
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function markFollowUpCopied(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const data = await readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  followUp.manualSendStatus = 'copied'
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function markFollowUpSentManually(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const data = await readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  followUp.status = 'sent'
+  followUp.executionState = 'sent'
+  followUp.sendStatus = 'sent'
+  followUp.sentAt = new Date().toISOString()
+  followUp.sequenceStatus = 'completed'
+  followUp.manualSendStatus = 'sent_manually'
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function stopFollowUpForBooking(formData: FormData) {
+  'use server'
+  const prospectId = String(formData.get('prospectId'))
+  const data = await readData()
+  const matches = data.followUps.filter((item) => item.prospectId === prospectId && item.sequenceStatus !== 'completed' && item.sequenceStatus !== 'stopped')
+  for (const followUp of matches) {
+    followUp.sequenceStatus = 'stopped'
+    followUp.stopReason = 'booking'
+  }
   await writeData(data)
   revalidatePath('/')
 }
