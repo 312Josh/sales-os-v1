@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache'
 import { getDataProvider } from './providers'
 import { getCalcomBookingLink } from './calcom'
 import { getStageForOutcome } from './next-step'
+import { autoGradeInquiry } from './inquiry-grading'
 import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
 
 const provider = getDataProvider()
@@ -173,6 +174,72 @@ export async function importProspects(formData: FormData) {
   revalidatePath('/')
 }
 
+
+export async function queueInquiryTest(formData: FormData) {
+  'use server'
+  const prospectId = String(formData.get('prospectId'))
+  const inquiryText = String(formData.get('inquiryText') || '')
+  const inquiryChannel = String(formData.get('inquiryChannel') || 'form') as 'form' | 'email' | 'phone'
+  const data = await readData()
+  const existing = data.inquiryTests.find((item) => item.prospectId === prospectId)
+  if (existing) {
+    existing.testStatus = 'ready_for_approval'
+    existing.inquiryText = inquiryText
+    existing.inquiryChannel = inquiryChannel
+  } else {
+    data.inquiryTests.unshift({
+      id: createTimestampedId('inq'),
+      prospectId,
+      inquiryText,
+      inquiryChannel,
+      testStatus: 'ready_for_approval',
+    })
+  }
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function approveInquiryTest(formData: FormData) {
+  'use server'
+  const inquiryId = String(formData.get('inquiryId'))
+  const data = await readData()
+  const inquiry = data.inquiryTests.find((item) => item.id === inquiryId)
+  if (!inquiry) return
+  inquiry.testStatus = 'approved'
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function submitInquiryTest(formData: FormData) {
+  'use server'
+  const inquiryId = String(formData.get('inquiryId'))
+  const data = await readData()
+  const inquiry = data.inquiryTests.find((item) => item.id === inquiryId)
+  if (!inquiry) return
+  inquiry.testStatus = 'monitoring'
+  inquiry.inquirySubmittedAt = new Date().toISOString()
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function gradeInquiryTest(formData: FormData) {
+  'use server'
+  const inquiryId = String(formData.get('inquiryId'))
+  const requestedGrade = String(formData.get('grade') || '') as 'A' | 'B' | 'C' | 'D'
+  const responseChannel = String(formData.get('responseChannel') || '') as 'email' | 'sms' | 'phone' | 'web'
+  const responseTimeMinutes = Number(formData.get('responseTimeMinutes') || 0)
+  const data = await readData()
+  const inquiry = data.inquiryTests.find((item) => item.id === inquiryId)
+  if (!inquiry) return
+  inquiry.grade = requestedGrade || autoGradeInquiry(responseTimeMinutes)
+  inquiry.responseChannel = responseChannel
+  inquiry.responseTimeMinutes = responseTimeMinutes
+  inquiry.firstResponseAt = new Date().toISOString()
+  inquiry.gradedAt = new Date().toISOString()
+  inquiry.testStatus = 'graded'
+  await writeData(data)
+  revalidatePath('/')
+}
 export async function approveFollowUp(formData: FormData) {
   'use server'
   const followUpId = String(formData.get('followUpId'))

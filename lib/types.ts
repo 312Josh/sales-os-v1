@@ -33,7 +33,7 @@ export type InquiryTest = {
   responseChannel?: 'email' | 'sms' | 'phone' | 'web'
   responseTimeMinutes?: number
   grade?: 'A' | 'B' | 'C' | 'D'
-  testStatus: 'not_started' | 'queued' | 'submitted' | 'graded'
+  testStatus: 'not_started' | 'queued' | 'ready_for_approval' | 'approved' | 'submitted' | 'monitoring' | 'graded' | 'expired'
 }
 
 export type Prospect = {

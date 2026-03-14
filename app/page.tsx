@@ -36,8 +36,8 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
       </div>
 
 
-      <CommandRail prospects={data.prospects} meetings={data.meetings} calls={data.calls} followUps={data.followUps} />
-      <FollowUpQueue prospects={data.prospects} calls={data.calls} followUps={data.followUps} meetings={data.meetings} />
+      <CommandRail prospects={data.prospects} meetings={data.meetings} calls={data.calls} followUps={data.followUps} inquiryTests={data.inquiryTests} />
+      <FollowUpQueue prospects={data.prospects} calls={data.calls} followUps={data.followUps} meetings={data.meetings} inquiryTests={data.inquiryTests} />
 
       <div className="kpis">
         <div className="kpi"><div className="muted">Queued calls</div><strong>{queuedCount}</strong></div>
