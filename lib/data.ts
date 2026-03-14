@@ -4,6 +4,7 @@ import { getCalcomBookingLink } from './calcom'
 import { getStageForOutcome } from './next-step'
 import { autoGradeInquiry } from './inquiry-grading'
 import { sendTwilioSms } from './twilio'
+import { runSiteAudit } from './site-audit'
 import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
 
 const provider = getDataProvider()
@@ -216,6 +217,43 @@ export async function queueInquiryTest(formData: FormData) {
       testStatus: 'ready_for_approval',
     })
   }
+
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (prospect) {
+    prospect.siteAuditStatus = 'queued'
+  }
+
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function runProspectSiteAudit(formData: FormData) {
+  'use server'
+  const prospectId = String(formData.get('prospectId'))
+  const data = await readData()
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (!prospect?.website) return
+
+  prospect.siteAuditStatus = 'running'
+  await writeData(data)
+
+  const audit = await runSiteAudit(prospect.id, prospect.website)
+  prospect.siteAuditStatus = audit.status
+  prospect.siteAuditAt = audit.auditedAt
+  prospect.pagespeedScore = audit.pagespeedScore
+  prospect.lcpMs = audit.lcpMs
+  prospect.clsScore = audit.clsScore
+  prospect.brokenLinksCount = audit.brokenLinksCount
+  prospect.missingMetaCount = audit.missingMetaCount
+  prospect.missingAltCount = audit.missingAltCount
+  prospect.siteHealthGrade = audit.grade
+  prospect.siteAuditSummary = audit.summary
+
+  if (audit.grade === 'C' || audit.grade === 'D') {
+    prospect.priorityReason = `${prospect.priorityReason} Site health ${audit.grade} — ${audit.summary}`.trim()
+    prospect.auditSummary = audit.summary || prospect.auditSummary
+  }
+
   await writeData(data)
   revalidatePath('/')
 }

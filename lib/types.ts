@@ -46,6 +46,16 @@ export type Prospect = {
   idealPitchAngle?: string
   callOpener?: string
   enrichmentSummary?: string
+  siteAuditStatus?: 'not_started' | 'queued' | 'running' | 'complete' | 'failed'
+  siteAuditAt?: string
+  pagespeedScore?: number
+  lcpMs?: number
+  clsScore?: number
+  brokenLinksCount?: number
+  missingMetaCount?: number
+  missingAltCount?: number
+  siteHealthGrade?: 'A' | 'B' | 'C' | 'D'
+  siteAuditSummary?: string
   id: string
   businessName: string
   market: string

@@ -1,6 +1,12 @@
 import { getBookingNextAction, getBookingState, getBookingStateLabel } from '@/lib/booking-state'
-import { approveFollowUp, markFollowUpCopied, markFollowUpSent, markFollowUpSentManually, sendBookingLink, sendFollowUpSms, stopFollowUpForBooking, stopFollowUpSequence } from '@/lib/data'
+import { approveFollowUp, markFollowUpCopied, markFollowUpSentManually, sendBookingLink, sendFollowUpSms, stopFollowUpForBooking, stopFollowUpSequence } from '@/lib/data'
 import type { FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
+
+function buildMailtoLink(item: FollowUpDraft) {
+  const subject = encodeURIComponent(item.subject || '')
+  const body = encodeURIComponent(item.message)
+  return `mailto:?subject=${subject}&body=${body}`
+}
 
 export function FollowUpPanel({
   prospect,
@@ -30,17 +36,30 @@ export function FollowUpPanel({
                 <div className="muted" style={{ marginTop: 6 }}>
                   Send channel: {item.sendChannel || item.channel} • Send status: {item.sendStatus || 'queued'} • Sequence: {item.sequenceStatus || 'active'}
                 </div>
-                <div className="row" style={{ marginTop: 10 }}>
+                <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
                   <form action={approveFollowUp}>
                     <input type="hidden" name="followUpId" value={item.id} />
                     <button className="secondary" type="submit">Mark approved</button>
                   </form>
                   {item.executionState === 'ready_to_send' ? (
                     <>
-                      <form action={markFollowUpCopied}>
-                        <input type="hidden" name="followUpId" value={item.id} />
-                        <button className="secondary" type="submit">Mark copied</button>
-                      </form>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(`${item.subject ? `Subject: ${item.subject}\n\n` : ''}${item.message}`)
+                          const formData = new FormData()
+                          formData.set('followUpId', item.id)
+                          await markFollowUpCopied(formData)
+                        }}
+                      >
+                        Copy full draft
+                      </button>
+                      {item.channel === 'email' ? (
+                        <a href={buildMailtoLink(item)} target="_blank" rel="noreferrer">
+                          <button type="button" className="secondary">Open in Gmail/mail</button>
+                        </a>
+                      ) : null}
                       <form action={markFollowUpSentManually}>
                         <input type="hidden" name="followUpId" value={item.id} />
                         <button type="submit">Mark sent manually</button>
