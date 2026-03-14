@@ -138,7 +138,9 @@
     {
       "id": "it1",
       "prospectId": "p1",
-      "testStatus": "queued"
+      "testStatus": "queued",
+      "inquiryText": "Queued HVAC response-time test for a cooling issue.",
+      "inquiryChannel": "form"
     },
     {
       "id": "it2",
@@ -148,7 +150,10 @@
       "responseChannel": "email",
       "responseTimeMinutes": 72,
       "grade": "C",
-      "testStatus": "graded"
+      "testStatus": "graded",
+      "inquiryText": "Submitted med spa consult inquiry to measure response speed.",
+      "inquiryChannel": "email",
+      "gradedAt": "2026-03-12T15:12:00.000Z"
     }
   ]
 }

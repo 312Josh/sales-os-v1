@@ -17,6 +17,7 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
   const queue = [...data.prospects].sort((a, b) => b.priorityScore - a.priorityScore)
   const selectedProspect = queue.find((prospect) => prospect.id === params?.prospectId) ?? queue[0]
   const calls = data.calls.filter((call) => call.prospectId === selectedProspect?.id)
+  const inquiryTest = data.inquiryTests.find((test) => test.prospectId === selectedProspect?.id)
   const followUps = data.followUps.filter((item) => item.prospectId === selectedProspect?.id)
   const meeting = data.meetings.find((item) => item.prospectId === selectedProspect?.id)
   const proposal = data.proposals.find((item) => item.prospectId === selectedProspect?.id)
@@ -83,7 +84,7 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
           </div>
         </div>
         <div className="stack">
-          {selectedProspect ? <ProspectDetail prospect={selectedProspect} calls={calls} /> : <div className="card">No prospects loaded.</div>}
+          {selectedProspect ? <ProspectDetail prospect={selectedProspect} calls={calls} inquiryTest={inquiryTest} /> : <div className="card">No prospects loaded.</div>}
           {selectedProspect ? <FollowUpPanel prospect={selectedProspect} followUps={followUps} meeting={meeting} /> : null}
         </div>
         <div>

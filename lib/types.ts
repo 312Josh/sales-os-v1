@@ -23,6 +23,9 @@ export type CallOutcome =
   | 'follow_up_later'
 
 export type InquiryTest = {
+  inquiryText?: string
+  inquiryChannel?: 'form' | 'email' | 'phone'
+  gradedAt?: string
   id: string
   prospectId: string
   inquirySubmittedAt?: string
