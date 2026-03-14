@@ -33,6 +33,10 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       message: `Hey ${prospect.decisionMaker || 'there'}, I just tried calling. Quick reason for the outreach: ${prospect.outreachHook} If useful, I can send a few ideas and a quick booking link.`,
       status: 'draft',
       executionState: 'pending',
+      sendChannel: 'sms',
+      sendStatus: 'queued',
+      sequenceStep: 1,
+      sequenceStatus: 'active',
       createdAt: now,
     })
     drafts.push({
@@ -43,6 +47,10 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       message: `Just tried calling — quick reason for the outreach: ${prospect.weakIntakeSignal} Happy to send a few ideas if helpful.`,
       status: 'draft',
       executionState: 'pending',
+      sendChannel: 'email',
+      sendStatus: 'queued',
+      sequenceStep: 1,
+      sequenceStatus: 'active',
       createdAt: now,
     })
   }
@@ -57,6 +65,10 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       message: `Good talking today. Based on what we discussed, the clearest gap is: ${prospect.weakIntakeSignal} The simplest next step is a short walkthrough and booking conversation.`,
       status: 'draft',
       executionState: 'pending',
+      sendChannel: 'email',
+      sendStatus: 'queued',
+      sequenceStep: 1,
+      sequenceStatus: 'active',
       createdAt: now,
     })
     drafts.push({
@@ -67,6 +79,10 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
       message: `Good speaking today — I can show you a faster path from inbound interest to booked conversation. Want the booking link?`,
       status: 'draft',
       executionState: 'pending',
+      sendChannel: 'email',
+      sendStatus: 'queued',
+      sequenceStep: 1,
+      sequenceStatus: 'active',
       createdAt: now,
     })
   }
@@ -261,6 +277,20 @@ export async function markFollowUpSent(formData: FormData) {
   if (!followUp) return
   followUp.status = 'sent'
   followUp.executionState = 'sent'
+  followUp.sendStatus = 'sent'
+  followUp.sentAt = new Date().toISOString()
+  followUp.sequenceStatus = 'completed'
+  await writeData(data)
+  revalidatePath('/')
+}
+
+export async function stopFollowUpSequence(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const data = await readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  followUp.sequenceStatus = 'stopped'
   await writeData(data)
   revalidatePath('/')
 }

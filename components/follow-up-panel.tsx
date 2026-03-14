@@ -1,5 +1,5 @@
 import { getBookingNextAction, getBookingState, getBookingStateLabel } from '@/lib/booking-state'
-import { approveFollowUp, markFollowUpSent, sendBookingLink } from '@/lib/data'
+import { approveFollowUp, markFollowUpSent, sendBookingLink, stopFollowUpSequence } from '@/lib/data'
 import type { FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
 
 export function FollowUpPanel({
@@ -28,7 +28,7 @@ export function FollowUpPanel({
                 {item.subject ? <div className="muted">Subject: {item.subject}</div> : null}
                 <div className="muted" style={{ marginTop: 6 }}>{item.message}</div>
                 <div className="muted" style={{ marginTop: 6 }}>
-                  Email sending path is now standardized around Postmark. SMS execution remains deferred.
+                  Send channel: {item.sendChannel || item.channel} • Send status: {item.sendStatus || 'queued'} • Sequence: {item.sequenceStatus || 'active'}
                 </div>
                 <div className="row" style={{ marginTop: 10 }}>
                   <form action={approveFollowUp}>
@@ -39,6 +39,12 @@ export function FollowUpPanel({
                     <form action={markFollowUpSent}>
                       <input type="hidden" name="followUpId" value={item.id} />
                       <button type="submit">Mark sent</button>
+                    </form>
+                  ) : null}
+                  {item.sequenceStatus !== 'stopped' && item.sequenceStatus !== 'completed' ? (
+                    <form action={stopFollowUpSequence}>
+                      <input type="hidden" name="followUpId" value={item.id} />
+                      <button className="secondary" type="submit">Stop sequence</button>
                     </form>
                   ) : null}
                 </div>

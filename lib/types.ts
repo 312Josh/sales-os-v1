@@ -93,6 +93,12 @@ export type FollowUpDraft = {
   message: string
   status: 'draft' | 'approved' | 'ready' | 'sent'
   executionState?: 'pending' | 'ready_to_send' | 'sent'
+  sendChannel?: 'email' | 'sms'
+  sendStatus?: 'queued' | 'sending' | 'sent' | 'failed'
+  sentAt?: string
+  providerId?: string
+  sequenceStep?: number
+  sequenceStatus?: 'active' | 'paused' | 'completed' | 'stopped'
   createdAt: string
 }
 
