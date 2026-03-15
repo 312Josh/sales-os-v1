@@ -8,3 +8,5 @@ node_modules
 .next
 .vercel
 .env.local
+.brv/
+.claude/

@@ -127,7 +127,24 @@
     }
   ],
   "calls": [],
-  "followUps": [],
+  "followUps": [
+    {
+      "id": "fu-sms-test-1773452638576",
+      "prospectId": "p1",
+      "trigger": "interested",
+      "channel": "sms",
+      "message": "Test SMS from Sales OS. If you got this, the Twilio send path is working.",
+      "status": "sent",
+      "executionState": "sent",
+      "sendChannel": "sms",
+      "sendStatus": "sent",
+      "sequenceStep": 1,
+      "sequenceStatus": "completed",
+      "createdAt": "2026-03-14T01:43:58.576Z",
+      "sentAt": "2026-03-14T01:44:26.352Z",
+      "providerId": "SMe9f51ac3c73e566e5921ac7639ac050b"
+    }
+  ],
   "meetings": [],
   "proposals": [],
   "bookingLinks": {
