@@ -56,6 +56,8 @@ export type Prospect = {
   missingAltCount?: number
   siteHealthGrade?: 'A' | 'B' | 'C' | 'D'
   siteAuditSummary?: string
+  vertical?: string
+  marketTag?: string
   id: string
   businessName: string
   market: string

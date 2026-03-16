@@ -39,6 +39,8 @@ function mapProspectToRow(prospect: Prospect) {
     pipeline_stage: prospect.pipelineStage,
     assigned_rep: prospect.assignedRep,
     notes: prospect.notes,
+    vertical: prospect.vertical || '',
+    market_tag: prospect.marketTag || '',
   }
 }
 
@@ -148,6 +150,8 @@ export async function readSupabaseData(): Promise<SalesOsData> {
       pipelineStage: row.pipeline_stage,
       assignedRep: row.assigned_rep,
       notes: row.notes,
+      vertical: row.vertical || '',
+      marketTag: row.market_tag || '',
     })),
     calls: (calls.data || []).map((row: any) => ({
       id: row.id,
