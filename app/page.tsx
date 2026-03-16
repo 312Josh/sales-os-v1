@@ -28,7 +28,7 @@ async function PageContent({ initialProspectIdPromise }: { initialProspectIdProm
   return (
     <main className="page">
       <div style={{ marginBottom: 18 }}>
-        <h1 style={{ marginBottom: 8 }}>Call-Centered Sales OS v1</h1>
+        <h1 style={{ marginBottom: 8 }}>Sales OS</h1>
         <div className="muted">Rep workflow shell for Josh and Paul — queue first, context first, fast logging first.</div>
         <div className="row" style={{ marginTop: 10 }}>
           <a href="/prospects"><button type="button" className="secondary">Open Prospect Ops</button></a>
