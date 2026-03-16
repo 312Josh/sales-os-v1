@@ -35,6 +35,11 @@ export default async function Home() {
 
       {/* Call Queue */}
       <CallQueue prospects={queue} />
+
+      {/* Footer */}
+      <footer className="mt-12 pb-6 text-center text-xs text-slate-400">
+        © {new Date().getFullYear()} <a href="https://cogrow.ai" className="text-slate-500 hover:text-blue-600 transition-colors font-medium">CoGrow</a>. All rights reserved.
+      </footer>
     </main>
   )
 }

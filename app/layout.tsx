@@ -15,6 +15,7 @@ function NavBar() {
           <Link href="/" className="font-bold text-lg tracking-tight flex items-center gap-2">
             <span className="bg-blue-500 text-white w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold">S</span>
             Sales OS
+            <span className="text-[10px] text-slate-500 font-normal ml-1.5 hidden sm:inline">by CoGrow</span>
           </Link>
           <div className="hidden sm:flex items-center gap-1">
             <Link href="/" className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">
