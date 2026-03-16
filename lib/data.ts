@@ -4,6 +4,7 @@ import { getCalcomBookingLink } from './calcom'
 import { getStageForOutcome } from './next-step'
 import { autoGradeInquiry } from './inquiry-grading'
 import { sendTwilioSms } from './twilio'
+import { sendEmail } from './resend'
 import { runSiteAudit } from './site-audit'
 import type { CallOutcome, FollowUpDraft, MeetingRecord, ProposalRecord, Prospect, SalesOsData, PipelineStage } from './types'
 
@@ -328,6 +329,31 @@ export async function markFollowUpSent(formData: FormData) {
   revalidatePath('/')
 }
 
+
+export async function sendFollowUpEmail(formData: FormData) {
+  'use server'
+  const followUpId = String(formData.get('followUpId'))
+  const toEmail = String(formData.get('toEmail') || '')
+  const data = await readData()
+  const followUp = data.followUps.find((item) => item.id === followUpId)
+  if (!followUp) return
+  if (!toEmail) throw new Error('Recipient email required')
+  const result = await sendEmail({
+    to: toEmail,
+    subject: followUp.subject || 'Follow-up from Sales OS',
+    text: followUp.message,
+  })
+  followUp.status = 'sent'
+  followUp.executionState = 'sent'
+  followUp.sendStatus = 'sent'
+  followUp.sentAt = new Date().toISOString()
+  followUp.providerId = result.id || ''
+  followUp.sendChannel = 'email'
+  followUp.sequenceStatus = 'completed'
+  followUp.manualSendStatus = 'sent_manually'
+  await writeData(data)
+  revalidatePath('/')
+}
 
 export async function sendFollowUpSms(formData: FormData) {
   'use server'

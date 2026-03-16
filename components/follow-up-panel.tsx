@@ -1,5 +1,5 @@
 import { getBookingNextAction, getBookingState, getBookingStateLabel } from '@/lib/booking-state'
-import { approveFollowUp, markFollowUpCopied, markFollowUpSentManually, sendBookingLink, sendFollowUpSms, stopFollowUpForBooking, stopFollowUpSequence } from '@/lib/data'
+import { approveFollowUp, markFollowUpCopied, markFollowUpSentManually, sendBookingLink, sendFollowUpEmail, sendFollowUpSms, stopFollowUpForBooking, stopFollowUpSequence } from '@/lib/data'
 import type { FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
 
 function buildMailtoLink(item: FollowUpDraft) {
@@ -65,6 +65,13 @@ export function FollowUpPanel({
                         <button type="submit">Mark sent manually</button>
                       </form>
                     </>
+                  ) : null}
+                  {item.executionState === 'ready_to_send' && item.channel === 'email' ? (
+                    <form action={sendFollowUpEmail} className="row">
+                      <input type="hidden" name="followUpId" value={item.id} />
+                      <input name="toEmail" placeholder="Recipient email" type="email" />
+                      <button type="submit">Send via Resend</button>
+                    </form>
                   ) : null}
                   {item.executionState === 'ready_to_send' && item.channel === 'sms' ? (
                     <form action={sendFollowUpSms} className="row">
