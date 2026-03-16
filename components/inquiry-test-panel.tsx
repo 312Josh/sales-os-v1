@@ -25,11 +25,35 @@ export function InquiryTestPanel({ prospect, inquiryTest }: { prospect: Prospect
             </form>
           ) : null}
           {inquiryTest.testStatus === 'approved' ? (
-            <form action={submitInquiryTest}>
-              <input type="hidden" name="inquiryId" value={inquiryTest.id} />
-              <button type="submit">Mark submitted + start monitoring</button>
-              <div className="muted">Use this only when the real external submission has actually happened.</div>
-            </form>
+            <div className="stack">
+              <div className="muted">
+                <strong>Speed test submission flow:</strong> Copy the inquiry text below, open the prospect's contact form, paste and submit, then mark submitted to start the response timer.
+              </div>
+              <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(inquiryTest.inquiryText || draftText)
+                  }}
+                >
+                  Copy inquiry text
+                </button>
+                {prospect.contactFormUrl ? (
+                  <a href={prospect.contactFormUrl} target="_blank" rel="noreferrer">
+                    <button type="button" className="secondary">Open contact form</button>
+                  </a>
+                ) : prospect.website ? (
+                  <a href={prospect.website} target="_blank" rel="noreferrer">
+                    <button type="button" className="secondary">Open website</button>
+                  </a>
+                ) : null}
+              </div>
+              <form action={submitInquiryTest}>
+                <input type="hidden" name="inquiryId" value={inquiryTest.id} />
+                <button type="submit">Mark submitted + start monitoring</button>
+              </form>
+            </div>
           ) : null}
           {inquiryTest.testStatus === 'monitoring' ? (
             <form action={gradeInquiryTest} className="stack">
@@ -63,7 +87,7 @@ export function InquiryTestPanel({ prospect, inquiryTest }: { prospect: Prospect
       ) : (
         <div className="stack">
           <div><strong>Prepared inquiry draft:</strong><div className="muted">{draftText}</div></div>
-          <div className="muted">Rep can queue this prospect for an inquiry/speed test. Submission is approval-gated; live external submission still needs provider wiring.</div>
+          <div className="muted">Rep can queue this prospect for an inquiry/speed test. After approval, you'll copy the text, paste it into the prospect's contact form, and mark submitted to start the response timer.</div>
           <form action={queueInquiryTest} className="stack">
             <input type="hidden" name="prospectId" value={prospect.id} />
             <input type="hidden" name="inquiryText" value={draftText} />
