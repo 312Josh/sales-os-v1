@@ -1,6 +1,7 @@
 import { getSalesOsData } from '@/lib/data'
 import { CallQueue } from '@/components/call-queue'
 import { StaleFollowUpWedge } from '@/components/stale-followup-wedge'
+import { TodaysFocus } from '@/components/todays-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,9 @@ export default async function Home() {
           <p className="text-2xl font-bold text-emerald-600 mt-0.5">{meetingCount}</p>
         </div>
       </div>
+
+      {/* Today's Focus — top 5 actions ranked by priority */}
+      <TodaysFocus prospects={data.prospects} calls={data.calls} followUps={data.followUps} meetings={data.meetings} />
 
       {/* Stale Follow-Up Wedge */}
       <StaleFollowUpWedge prospects={data.prospects} calls={data.calls} followUps={data.followUps} />
