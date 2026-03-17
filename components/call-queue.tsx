@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CallDispositionForm } from "@/components/call-disposition-form";
-import type { Prospect } from "@/lib/types";
+import { getBookingState, getBookingStateLabel } from "@/lib/booking-state";
+import type { Prospect, MeetingRecord } from "@/lib/types";
 
 const NICHE_COLORS: Record<string, string> = {
   garage_door: "bg-orange-100 text-orange-700 border-orange-200",
@@ -51,7 +52,7 @@ function buildGoogleVoiceSmsUrl(phone: string, body: string): string {
   return `https://voice.google.com/u/0/messages?compose=${cleanPhone}&text=${encodeURIComponent(body)}`;
 }
 
-export function CallQueue({ prospects }: { prospects: Prospect[] }) {
+export function CallQueue({ prospects, meetings = [] }: { prospects: Prospect[]; meetings?: MeetingRecord[] }) {
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [marketFilter, setMarketFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
@@ -112,7 +113,7 @@ export function CallQueue({ prospects }: { prospects: Prospect[] }) {
       {/* Card Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((prospect) => (
-          <ProspectCard key={prospect.id} prospect={prospect} />
+          <ProspectCard key={prospect.id} prospect={prospect} meeting={meetings.find(m => m.prospectId === prospect.id)} />
         ))}
       </div>
 
@@ -126,10 +127,11 @@ export function CallQueue({ prospects }: { prospects: Prospect[] }) {
   );
 }
 
-function ProspectCard({ prospect }: { prospect: Prospect }) {
+function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: MeetingRecord }) {
   const [showNoAnswer, setShowNoAnswer] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const nicheClass = NICHE_COLORS[prospect.niche] || NICHE_COLORS[prospect.vertical || ""] || NICHE_COLORS.default;
+  const bookingState = getBookingState(prospect, meeting);
   const stageClass = STAGE_COLORS[prospect.pipelineStage] || STAGE_COLORS.sourced;
   const hook = prospect.callOpener || prospect.idealPitchAngle || prospect.outreachHook || "";
 
@@ -156,6 +158,10 @@ function ProspectCard({ prospect }: { prospect: Prospect }) {
           {!prospect.contactFormPresent && !prospect.contactFormUrl && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">No Form</Badge>}
           {!prospect.chatPresent && prospect.noChatSignal && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">No Chat</Badge>}
           {!prospect.onlineBookingPresent && prospect.noBookingSignal && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">No Booking</Badge>}
+          {bookingState === 'sent' && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600 border-blue-200">📅 Link Sent</Badge>}
+          {bookingState === 'awaiting_booking' && <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">📅 Awaiting</Badge>}
+          {bookingState === 'booked' && <Badge className="text-[10px] bg-emerald-500 text-white border-0">📅 Booked</Badge>}
+          {bookingState === 'completed' && <Badge className="text-[10px] bg-green-600 text-white border-0">✅ Complete</Badge>}
         </div>
 
         {/* Contact */}
