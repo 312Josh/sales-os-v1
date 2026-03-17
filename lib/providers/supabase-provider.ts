@@ -46,6 +46,16 @@ function mapProspectToRow(prospect: Prospect) {
     contact_form_present: prospect.contactFormPresent ?? false,
     chat_present: prospect.chatPresent ?? false,
     online_booking_present: prospect.onlineBookingPresent ?? false,
+    site_audit_status: prospect.siteAuditStatus || 'not_started',
+    site_audit_at: prospect.siteAuditAt || null,
+    pagespeed_score: prospect.pagespeedScore ?? null,
+    lcp_ms: prospect.lcpMs ?? null,
+    cls_score: prospect.clsScore ?? null,
+    broken_links_count: prospect.brokenLinksCount ?? 0,
+    missing_meta_count: prospect.missingMetaCount ?? 0,
+    missing_alt_count: prospect.missingAltCount ?? 0,
+    site_health_grade: prospect.siteHealthGrade || null,
+    site_audit_summary: prospect.siteAuditSummary || null,
   }
 }
 
@@ -162,6 +172,16 @@ export async function readSupabaseData(): Promise<SalesOsData> {
       contactFormPresent: row.contact_form_present ?? false,
       chatPresent: row.chat_present ?? false,
       onlineBookingPresent: row.online_booking_present ?? false,
+      siteAuditStatus: row.site_audit_status || 'not_started',
+      siteAuditAt: row.site_audit_at || undefined,
+      pagespeedScore: row.pagespeed_score ?? undefined,
+      lcpMs: row.lcp_ms ?? undefined,
+      clsScore: row.cls_score ?? undefined,
+      brokenLinksCount: row.broken_links_count ?? 0,
+      missingMetaCount: row.missing_meta_count ?? 0,
+      missingAltCount: row.missing_alt_count ?? 0,
+      siteHealthGrade: row.site_health_grade || undefined,
+      siteAuditSummary: row.site_audit_summary || undefined,
     })),
     calls: (calls.data || []).map((row: any) => ({
       id: row.id,

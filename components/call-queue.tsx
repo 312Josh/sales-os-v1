@@ -158,6 +158,14 @@ function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: Mee
           {!prospect.contactFormPresent && !prospect.contactFormUrl && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">No Form</Badge>}
           {prospect.chatPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Chat</Badge>}
           {prospect.onlineBookingPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Booking</Badge>}
+          {prospect.siteHealthGrade && (
+            <Badge variant="outline" className={`text-[10px] ${
+              prospect.siteHealthGrade === 'D' ? 'bg-red-50 text-red-600 border-red-200' :
+              prospect.siteHealthGrade === 'C' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+              prospect.siteHealthGrade === 'B' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+              'bg-green-50 text-green-600 border-green-200'
+            }`}>Site {prospect.siteHealthGrade}</Badge>
+          )}
           {bookingState === 'sent' && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600 border-blue-200">📅 Link Sent</Badge>}
           {bookingState === 'awaiting_booking' && <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">📅 Awaiting</Badge>}
           {bookingState === 'booked' && <Badge className="text-[10px] bg-emerald-500 text-white border-0">📅 Booked</Badge>}

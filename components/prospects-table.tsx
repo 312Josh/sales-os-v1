@@ -129,6 +129,7 @@ export function ProspectsTable({ prospects }: { prospects: Prospect[] }) {
                 <SortHeader field="assignedRep">Rep</SortHeader>
                 <SortHeader field="priorityScore">Score</SortHeader>
                 <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Site Grade</th>
                 <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Site</th>
               </tr>
             </thead>
@@ -153,6 +154,18 @@ export function ProspectsTable({ prospects }: { prospects: Prospect[] }) {
                   <td className="px-3 py-2.5">
                     {p.phone && (
                       <a href={`tel:${p.phone}`} className="text-xs text-blue-600 hover:underline">{p.phone}</a>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {p.siteHealthGrade ? (
+                      <Badge variant="outline" className={`text-[10px] ${
+                        p.siteHealthGrade === 'D' ? 'bg-red-50 text-red-600 border-red-200' :
+                        p.siteHealthGrade === 'C' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                        p.siteHealthGrade === 'B' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                        'bg-green-50 text-green-600 border-green-200'
+                      }`}>{p.siteHealthGrade}</Badge>
+                    ) : (
+                      <span className="text-[10px] text-slate-300">—</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5">
