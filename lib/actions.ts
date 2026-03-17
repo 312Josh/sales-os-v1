@@ -94,6 +94,63 @@ function createFollowUps(prospect: Prospect, outcome: CallOutcome): FollowUpDraf
   return drafts
 }
 
+export async function createProspectAction(formData: FormData) {
+  const data = await readData()
+  const prospect: Prospect = {
+    id: createTimestampedId('prospect'),
+    businessName: String(formData.get('businessName') || ''),
+    market: String(formData.get('market') || ''),
+    niche: String(formData.get('niche') || ''),
+    city: String(formData.get('city') || ''),
+    suburb: String(formData.get('suburb') || ''),
+    website: String(formData.get('website') || ''),
+    phone: String(formData.get('phone') || ''),
+    contactFormUrl: String(formData.get('contactFormUrl') || ''),
+    decisionMaker: String(formData.get('decisionMaker') || ''),
+    linkedInUrl: String(formData.get('linkedInUrl') || ''),
+    weakSiteSignal: String(formData.get('weakSiteSignal') || ''),
+    weakIntakeSignal: String(formData.get('weakIntakeSignal') || ''),
+    noChatSignal: String(formData.get('noChatSignal') || '') === 'on',
+    noBookingSignal: String(formData.get('noBookingSignal') || '') === 'on',
+    ownerOperatedSignal: String(formData.get('ownerOperatedSignal') || ''),
+    auditSummary: String(formData.get('auditSummary') || ''),
+    outreachHook: String(formData.get('outreachHook') || ''),
+    siteScore: Number(formData.get('siteScore') || 3),
+    intakeScore: Number(formData.get('intakeScore') || 3),
+    ownerFitScore: Number(formData.get('ownerFitScore') || 3),
+    fitScore: Number(formData.get('fitScore') || 3),
+    priorityScore: Number(formData.get('priorityScore') || 3),
+    priorityReason: String(formData.get('priorityReason') || 'New prospect added.'),
+    pipelineStage: 'sourced',
+    assignedRep: String(formData.get('assignedRep') || 'Josh') as 'Josh' | 'Paul',
+    notes: String(formData.get('notes') || ''),
+    priorityBucket: '',
+    decisionMakerTitle: String(formData.get('decisionMakerTitle') || ''),
+    contactFormPresent: String(formData.get('contactFormPresent') || '') === 'on',
+    chatPresent: String(formData.get('chatPresent') || '') === 'on',
+    onlineBookingPresent: String(formData.get('onlineBookingPresent') || '') === 'on',
+  }
+  data.prospects.unshift(prospect)
+  await writeData(data)
+  revalidatePath('/')
+  revalidatePath('/prospects')
+}
+
+export async function importProspectsAction(formData: FormData) {
+  const raw = String(formData.get('json') || '[]')
+  const parsed = JSON.parse(raw) as Prospect[]
+  const data = await readData()
+  for (const item of parsed) {
+    data.prospects.push({
+      ...item,
+      id: item.id || createTimestampedId('prospect'),
+    })
+  }
+  await writeData(data)
+  revalidatePath('/')
+  revalidatePath('/prospects')
+}
+
 export async function logCallOutcomeAction(prospectId: string, outcome: CallOutcome, notes: string, nextStep: string) {
   const data = await readData()
   const prospect = data.prospects.find((item) => item.id === prospectId)
