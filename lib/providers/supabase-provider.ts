@@ -41,6 +41,11 @@ function mapProspectToRow(prospect: Prospect) {
     notes: prospect.notes,
     vertical: prospect.vertical || '',
     market_tag: prospect.marketTag || '',
+    priority_bucket: prospect.priorityBucket || '',
+    decision_maker_title: prospect.decisionMakerTitle || '',
+    contact_form_present: prospect.contactFormPresent ?? false,
+    chat_present: prospect.chatPresent ?? false,
+    online_booking_present: prospect.onlineBookingPresent ?? false,
   }
 }
 
@@ -152,6 +157,11 @@ export async function readSupabaseData(): Promise<SalesOsData> {
       notes: row.notes,
       vertical: row.vertical || '',
       marketTag: row.market_tag || '',
+      priorityBucket: row.priority_bucket || '',
+      decisionMakerTitle: row.decision_maker_title || '',
+      contactFormPresent: row.contact_form_present ?? false,
+      chatPresent: row.chat_present ?? false,
+      onlineBookingPresent: row.online_booking_present ?? false,
     })),
     calls: (calls.data || []).map((row: any) => ({
       id: row.id,

@@ -176,6 +176,11 @@ export async function createProspect(formData: FormData) {
     pipelineStage: 'sourced',
     assignedRep: String(formData.get('assignedRep') || 'Josh') as 'Josh' | 'Paul',
     notes: String(formData.get('notes') || ''),
+    priorityBucket: '',
+    decisionMakerTitle: String(formData.get('decisionMakerTitle') || ''),
+    contactFormPresent: String(formData.get('contactFormPresent') || '') === 'on',
+    chatPresent: String(formData.get('chatPresent') || '') === 'on',
+    onlineBookingPresent: String(formData.get('onlineBookingPresent') || '') === 'on',
   }
   data.prospects.unshift(prospect)
   await writeData(data)

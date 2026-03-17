@@ -58,6 +58,11 @@ export type Prospect = {
   siteAuditSummary?: string
   vertical?: string
   marketTag?: string
+  priorityBucket?: 'hot' | 'warm' | 'cold' | ''
+  decisionMakerTitle?: string
+  contactFormPresent?: boolean
+  chatPresent?: boolean
+  onlineBookingPresent?: boolean
   id: string
   businessName: string
   market: string

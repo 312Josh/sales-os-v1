@@ -149,11 +149,21 @@ function ProspectCard({ prospect }: { prospect: Prospect }) {
         <div className="flex flex-wrap gap-1.5 mb-3">
           <Badge variant="outline" className={`text-[10px] ${nicheClass}`}>{nicheLabel(prospect.niche || prospect.vertical || "")}</Badge>
           <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-600 border-slate-200">{prospect.marketTag || prospect.market}</Badge>
-          {prospect.priorityScore > 70 && <Badge className="text-[10px] bg-red-500 text-white border-0">Hot</Badge>}
+          {(prospect.priorityBucket === 'hot' || prospect.priorityScore > 70) && <Badge className="text-[10px] bg-red-500 text-white border-0">Hot</Badge>}
+          {prospect.priorityBucket === 'warm' && prospect.priorityScore <= 70 && <Badge className="text-[10px] bg-amber-500 text-white border-0">Warm</Badge>}
+          {!prospect.contactFormPresent && !prospect.contactFormUrl && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">No Form</Badge>}
+          {!prospect.chatPresent && prospect.noChatSignal && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">No Chat</Badge>}
+          {!prospect.onlineBookingPresent && prospect.noBookingSignal && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">No Booking</Badge>}
         </div>
 
         {/* Contact */}
         <div className="space-y-1.5 mb-3 text-sm">
+          {(prospect.decisionMaker || prospect.decisionMakerTitle) && (
+            <div className="flex items-center gap-2 text-slate-700 min-h-[28px]">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="font-medium">{prospect.decisionMaker}{prospect.decisionMakerTitle ? ` · ${prospect.decisionMakerTitle}` : ''}</span>
+            </div>
+          )}
           {prospect.phone && (
             <a href={`tel:${prospect.phone}`} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors min-h-[28px]">
               <Phone className="w-3.5 h-3.5 text-slate-400" />
