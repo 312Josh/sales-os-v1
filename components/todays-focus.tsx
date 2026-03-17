@@ -32,12 +32,12 @@ function buildFocusActions(
     const latestCall = prospectCalls.sort((a, b) => new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime())[0]
     const latestFollowUp = prospectFollowUps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
 
-    // Hot prospects that haven't been called yet
-    if (prospect.pipelineStage === "call_queued" && prospect.priorityScore >= 60) {
+    // Prospects in call queue — prioritize by score
+    if (prospect.pipelineStage === "call_queued") {
       actions.push({
         prospect,
         action: "Call now",
-        reason: `Priority ${prospect.priorityScore} — ${prospect.priorityReason?.slice(0, 60) || "high-fit prospect"}`,
+        reason: prospect.priorityReason?.slice(0, 80) || prospect.outreachHook?.slice(0, 80) || "Queued for outreach",
         priority: 100 + prospect.priorityScore,
         icon: Phone,
         color: "text-red-600",

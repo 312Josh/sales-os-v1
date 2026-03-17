@@ -156,8 +156,8 @@ function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: Mee
           {(prospect.priorityBucket === 'hot' || prospect.priorityScore > 70) && <Badge className="text-[10px] bg-red-500 text-white border-0">Hot</Badge>}
           {prospect.priorityBucket === 'warm' && prospect.priorityScore <= 70 && <Badge className="text-[10px] bg-amber-500 text-white border-0">Warm</Badge>}
           {!prospect.contactFormPresent && !prospect.contactFormUrl && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">No Form</Badge>}
-          {!prospect.chatPresent && prospect.noChatSignal && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">No Chat</Badge>}
-          {!prospect.onlineBookingPresent && prospect.noBookingSignal && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">No Booking</Badge>}
+          {prospect.chatPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Chat</Badge>}
+          {prospect.onlineBookingPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Booking</Badge>}
           {bookingState === 'sent' && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600 border-blue-200">📅 Link Sent</Badge>}
           {bookingState === 'awaiting_booking' && <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">📅 Awaiting</Badge>}
           {bookingState === 'booked' && <Badge className="text-[10px] bg-emerald-500 text-white border-0">📅 Booked</Badge>}
@@ -214,11 +214,20 @@ function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: Mee
           >
             <PhoneMissed className="w-3 h-3 mr-1" /> No Answer
           </Button>
-          <Button size="sm" variant="outline" className="text-xs min-h-[36px] px-3 rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50 ml-auto" asChild>
-            <a href={`https://plumbing-os.vercel.app/api/generate-proof`} target="_blank" rel="noreferrer" title="Generate proof asset for this prospect">
-              <Sparkles className="w-3 h-3 mr-1" /> Proof
-            </a>
-          </Button>
+          {(prospect.vertical === 'field_service' || ['plumbing', 'hvac', 'electrical', 'garage_door', 'appliance'].includes(prospect.niche || '')) && (
+            <Button size="sm" variant="outline" className="text-xs min-h-[36px] px-3 rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50 ml-auto" asChild>
+              <a href={`https://plumbing-os.vercel.app/api/generate-proof`} target="_blank" rel="noreferrer" title="Generate proof asset">
+                <Sparkles className="w-3 h-3 mr-1" /> Proof
+              </a>
+            </Button>
+          )}
+          {prospect.vertical === 'professional_services' && (
+            <Button size="sm" variant="outline" className="text-xs min-h-[36px] px-3 rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50 ml-auto" asChild>
+              <a href={`https://professional-services-os.vercel.app/api/generate-proof`} target="_blank" rel="noreferrer" title="Generate proof asset">
+                <Sparkles className="w-3 h-3 mr-1" /> Proof
+              </a>
+            </Button>
+          )}
         </div>
 
         {/* No-answer text drop */}
