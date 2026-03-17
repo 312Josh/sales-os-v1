@@ -60,6 +60,8 @@ export type Prospect = {
   marketTag?: string
   priorityBucket?: 'hot' | 'warm' | 'cold' | ''
   decisionMakerTitle?: string
+  contactStatus?: 'new' | 'contacted' | 'replied' | 'booked' | 'not_interested'
+  lastContactedAt?: string
   contactFormPresent?: boolean
   chatPresent?: boolean
   onlineBookingPresent?: boolean

@@ -167,6 +167,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
           {!prospect.contactFormPresent && !prospect.contactFormUrl && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">No Form</Badge>}
           {prospect.chatPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Chat</Badge>}
           {prospect.onlineBookingPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Booking</Badge>}
+          {prospect.contactStatus === 'replied' && <Badge className="text-[10px] bg-green-500 text-white border-0">📱 Replied</Badge>}
           {prospect.siteHealthGrade && (
             <Badge variant="outline" className={`text-[10px] ${
               prospect.siteHealthGrade === 'D' ? 'bg-red-50 text-red-600 border-red-200' :
