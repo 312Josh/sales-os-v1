@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Prospect, CallLog, FollowUpDraft, MeetingRecord } from "@/lib/types"
 import { getBookingState } from "@/lib/booking-state"
+import { computeCompositeGrade, getGradeColor } from "@/lib/composite-grade"
 
 type FocusAction = {
   prospect: Prospect
@@ -32,15 +33,17 @@ function buildFocusActions(
     const latestCall = prospectCalls.sort((a, b) => new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime())[0]
     const latestFollowUp = prospectFollowUps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
 
-    // Prospects in call queue — prioritize by score
+    // Prospects in call queue — only show A and B grades
     if (prospect.pipelineStage === "call_queued") {
+      const grade = computeCompositeGrade(prospect, calls)
+      if (grade !== 'A' && grade !== 'B') continue
       actions.push({
         prospect,
         action: "Call now",
         reason: prospect.priorityReason?.slice(0, 80) || prospect.outreachHook?.slice(0, 80) || "Queued for outreach",
-        priority: 100 + prospect.priorityScore,
+        priority: grade === 'A' ? 200 + prospect.priorityScore : 100 + prospect.priorityScore,
         icon: Phone,
-        color: "text-red-600",
+        color: grade === 'A' ? "text-red-600" : "text-orange-600",
       })
       continue
     }
@@ -117,12 +120,12 @@ export function TodaysFocus({
       <div className="space-y-2">
         {actions.map((item, idx) => {
           const Icon = item.icon
+          const grade = computeCompositeGrade(item.prospect, calls)
+          const gradeColor = getGradeColor(grade)
           return (
             <Card key={`${item.prospect.id}-${idx}`} className="hover:shadow-sm transition-shadow">
               <CardContent className="py-3 px-4 flex items-center gap-3">
-                <div className={`shrink-0 ${item.color}`}>
-                  <Icon className="w-4 h-4" />
-                </div>
+                <Badge className={`text-[11px] font-bold px-2 py-0.5 ${gradeColor} shrink-0`}>{grade}</Badge>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm text-sales-900 truncate">{item.prospect.businessName}</span>

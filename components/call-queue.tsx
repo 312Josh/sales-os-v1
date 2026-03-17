@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CallDispositionForm } from "@/components/call-disposition-form";
 import { getBookingState, getBookingStateLabel } from "@/lib/booking-state";
-import type { Prospect, MeetingRecord } from "@/lib/types";
+import { computeCompositeGrade, getGradeColor, getGradeLabel } from "@/lib/composite-grade";
+import { runSingleAuditAction } from "@/lib/actions";
+import type { Prospect, MeetingRecord, CallLog } from "@/lib/types";
 
 const NICHE_COLORS: Record<string, string> = {
   garage_door: "bg-orange-100 text-orange-700 border-orange-200",
@@ -52,7 +54,7 @@ function buildGoogleVoiceSmsUrl(phone: string, body: string): string {
   return `https://voice.google.com/u/0/messages?compose=${cleanPhone}&text=${encodeURIComponent(body)}`;
 }
 
-export function CallQueue({ prospects, meetings = [] }: { prospects: Prospect[]; meetings?: MeetingRecord[] }) {
+export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects: Prospect[]; meetings?: MeetingRecord[]; calls?: CallLog[] }) {
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [marketFilter, setMarketFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
@@ -113,7 +115,7 @@ export function CallQueue({ prospects, meetings = [] }: { prospects: Prospect[];
       {/* Card Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((prospect) => (
-          <ProspectCard key={prospect.id} prospect={prospect} meeting={meetings.find(m => m.prospectId === prospect.id)} />
+          <ProspectCard key={prospect.id} prospect={prospect} meeting={meetings.find(m => m.prospectId === prospect.id)} calls={calls} />
         ))}
       </div>
 
@@ -127,11 +129,15 @@ export function CallQueue({ prospects, meetings = [] }: { prospects: Prospect[];
   );
 }
 
-function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: MeetingRecord }) {
+function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; meeting?: MeetingRecord; calls?: CallLog[] }) {
   const [showNoAnswer, setShowNoAnswer] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [auditing, setAuditing] = useState(false);
   const nicheClass = NICHE_COLORS[prospect.niche] || NICHE_COLORS[prospect.vertical || ""] || NICHE_COLORS.default;
   const bookingState = getBookingState(prospect, meeting);
+  const compositeGrade = computeCompositeGrade(prospect, calls);
+  const gradeColor = getGradeColor(compositeGrade);
+  const gradeLabel = getGradeLabel(compositeGrade);
   const stageClass = STAGE_COLORS[prospect.pipelineStage] || STAGE_COLORS.sourced;
   const hook = prospect.callOpener || prospect.idealPitchAngle || prospect.outreachHook || "";
 
@@ -143,7 +149,10 @@ function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: Mee
       <CardContent className="pt-5 pb-4 px-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-3">
-          <h3 className="font-bold text-sales-900 text-[15px] leading-tight">{prospect.businessName}</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <Badge className={`text-[11px] font-bold px-2 py-0.5 ${gradeColor} shrink-0`}>{compositeGrade}</Badge>
+            <h3 className="font-bold text-sales-900 text-[15px] leading-tight truncate">{prospect.businessName}</h3>
+          </div>
           <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 ${stageClass} shrink-0`}>
             {stageLabel(prospect.pipelineStage)}
           </Badge>
@@ -222,6 +231,23 @@ function ProspectCard({ prospect, meeting }: { prospect: Prospect; meeting?: Mee
           >
             <PhoneMissed className="w-3 h-3 mr-1" /> No Answer
           </Button>
+          {prospect.website && !auditing && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs min-h-[36px] px-3 rounded-lg border-sky-200 text-sky-600 hover:bg-sky-50"
+              onClick={async () => {
+                setAuditing(true)
+                await runSingleAuditAction(prospect.id)
+                setAuditing(false)
+              }}
+            >
+              <Search className="w-3 h-3 mr-1" /> {prospect.siteHealthGrade ? 'Re-Audit' : 'Audit'}
+            </Button>
+          )}
+          {auditing && (
+            <span className="text-xs text-sky-500 animate-pulse px-2">Auditing...</span>
+          )}
           {(prospect.vertical === 'field_service' || ['plumbing', 'hvac', 'electrical', 'garage_door', 'appliance'].includes(prospect.niche || '')) && (
             <Button size="sm" variant="outline" className="text-xs min-h-[36px] px-3 rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50 ml-auto" asChild>
               <a href={`https://plumbing-os.vercel.app/api/generate-proof`} target="_blank" rel="noreferrer" title="Generate proof asset">

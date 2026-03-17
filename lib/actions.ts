@@ -151,6 +151,38 @@ export async function importProspectsAction(formData: FormData) {
   revalidatePath('/prospects')
 }
 
+export async function runSingleAuditAction(prospectId: string) {
+  const { runSiteAudit } = await import('./site-audit')
+  const data = await readData()
+  const prospect = data.prospects.find((item) => item.id === prospectId)
+  if (!prospect?.website) return
+
+  prospect.siteAuditStatus = 'running'
+  await writeData(data)
+
+  const website = prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`
+  const audit = await runSiteAudit(prospect.id, website)
+
+  prospect.siteAuditStatus = audit.status
+  prospect.siteAuditAt = audit.auditedAt
+  prospect.pagespeedScore = audit.pagespeedScore
+  prospect.lcpMs = audit.lcpMs
+  prospect.clsScore = audit.clsScore
+  prospect.brokenLinksCount = audit.brokenLinksCount
+  prospect.missingMetaCount = audit.missingMetaCount
+  prospect.missingAltCount = audit.missingAltCount
+  prospect.siteHealthGrade = audit.grade
+  prospect.siteAuditSummary = audit.summary
+
+  if (audit.grade === 'C' || audit.grade === 'D') {
+    prospect.priorityReason = `Site health ${audit.grade} — ${audit.summary}`.trim()
+  }
+
+  await writeData(data)
+  revalidatePath('/')
+  revalidatePath('/prospects')
+}
+
 export async function logCallOutcomeAction(prospectId: string, outcome: CallOutcome, notes: string, nextStep: string) {
   const data = await readData()
   const prospect = data.prospects.find((item) => item.id === prospectId)

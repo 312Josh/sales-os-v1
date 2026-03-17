@@ -42,7 +42,7 @@ export default async function Home() {
       <StaleFollowUpWedge prospects={data.prospects} calls={data.calls} followUps={data.followUps} />
 
       {/* Call Queue */}
-      <CallQueue prospects={queue} meetings={data.meetings} />
+      <CallQueue prospects={queue} meetings={data.meetings} calls={data.calls} />
 
       {/* Footer */}
       <footer className="mt-12 pb-6 text-center text-xs text-slate-400">
