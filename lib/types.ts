@@ -62,6 +62,11 @@ export type Prospect = {
   decisionMakerTitle?: string
   contactStatus?: 'new' | 'contacted' | 'replied' | 'booked' | 'not_interested'
   lastContactedAt?: string
+  proofViewedAt?: string
+  proofViewCount?: number
+  emailOpenedAt?: string
+  emailClickedAt?: string
+  trackingToken?: string
   contactFormPresent?: boolean
   chatPresent?: boolean
   onlineBookingPresent?: boolean
