@@ -27,7 +27,12 @@ function NavBar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-400">Josh Mellender</span>
+          {/* Mobile nav links */}
+          <div className="flex sm:hidden items-center gap-1 mr-2">
+            <Link href="/" className="px-2 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10">Queue</Link>
+            <Link href="/prospects" className="px-2 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10">Prospects</Link>
+          </div>
+          <span className="text-xs text-slate-400 hidden sm:inline">Josh Mellender</span>
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">JM</div>
         </div>
       </div>
