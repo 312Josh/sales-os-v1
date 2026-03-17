@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, X } from "lucide-react";
+import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CallDispositionForm } from "@/components/call-disposition-form";
 import type { Prospect } from "@/lib/types";
 
 const NICHE_COLORS: Record<string, string> = {
@@ -127,6 +128,7 @@ export function CallQueue({ prospects }: { prospects: Prospect[] }) {
 
 function ProspectCard({ prospect }: { prospect: Prospect }) {
   const [showNoAnswer, setShowNoAnswer] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const nicheClass = NICHE_COLORS[prospect.niche] || NICHE_COLORS[prospect.vertical || ""] || NICHE_COLORS.default;
   const stageClass = STAGE_COLORS[prospect.pipelineStage] || STAGE_COLORS.sourced;
   const hook = prospect.callOpener || prospect.idealPitchAngle || prospect.outreachHook || "";
@@ -230,6 +232,23 @@ function ProspectCard({ prospect }: { prospect: Prospect }) {
                 <X className="w-3 h-3" />
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Expand toggle for call disposition */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="w-full mt-3 flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-blue-600 transition-colors py-1"
+        >
+          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {expanded ? "Hide" : "Log Call"}
+        </button>
+
+        {/* Inline call disposition */}
+        {expanded && (
+          <div className="mt-3">
+            <CallDispositionForm prospect={prospect} />
           </div>
         )}
       </CardContent>
