@@ -128,17 +128,24 @@ function mapInquiryToRow(item: InquiryTest) {
 
 export async function readSupabaseData(): Promise<SalesOsData> {
   const supabase = getClient()
-  const [prospects, calls, followUps, meetings, proposals, inquiryTests] = await Promise.all([
+  const [prospects, calls, followUps, meetings, proposals, inquiryTests, sequences] = await Promise.all([
     supabase.from('prospects').select('*').order('priority_score', { ascending: false }),
     supabase.from('call_logs').select('*').order('called_at', { ascending: false }),
     supabase.from('follow_up_drafts').select('*').order('created_at', { ascending: false }),
     supabase.from('meetings').select('*').order('booked_time', { ascending: false, nullsFirst: true }),
     supabase.from('proposals').select('*').order('id', { ascending: false }),
     supabase.from('inquiry_tests').select('*').order('id', { ascending: false }),
+    supabase.from('sequences').select('*').in('status', ['active', 'paused']),
   ])
 
   if ([prospects, calls, followUps, meetings, proposals, inquiryTests].some((r) => r.error)) {
     throw new Error('Failed to read one or more Supabase tables')
+  }
+
+  // Build sequence lookup by prospect_id
+  const seqByProspect = new Map<string, any>()
+  for (const seq of (sequences.data || [])) {
+    seqByProspect.set(seq.prospect_id, seq)
   }
 
   return {
@@ -196,6 +203,10 @@ export async function readSupabaseData(): Promise<SalesOsData> {
       missingAltCount: row.missing_alt_count ?? 0,
       siteHealthGrade: row.site_health_grade || undefined,
       siteAuditSummary: row.site_audit_summary || undefined,
+      activeSequenceId: seqByProspect.get(row.id)?.id || undefined,
+      activeSequenceStatus: seqByProspect.get(row.id)?.status || undefined,
+      activeSequenceStep: seqByProspect.get(row.id)?.current_step ?? undefined,
+      activeSequenceStartedAt: seqByProspect.get(row.id)?.started_at || undefined,
     })),
     calls: (calls.data || []).map((row: any) => ({
       id: row.id,

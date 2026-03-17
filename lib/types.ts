@@ -67,6 +67,10 @@ export type Prospect = {
   emailOpenedAt?: string
   emailClickedAt?: string
   trackingToken?: string
+  activeSequenceId?: string
+  activeSequenceStatus?: string
+  activeSequenceStep?: number
+  activeSequenceStartedAt?: string
   contactFormPresent?: boolean
   chatPresent?: boolean
   onlineBookingPresent?: boolean

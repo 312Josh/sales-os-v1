@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X, Search } from "lucide-react";
+import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X, Search, Play, Pause, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -133,6 +133,8 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
   const [showNoAnswer, setShowNoAnswer] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [auditing, setAuditing] = useState(false);
+  const [startingSequence, setStartingSequence] = useState(false);
+  const [seqAction, setSeqAction] = useState(false);
   const nicheClass = NICHE_COLORS[prospect.niche] || NICHE_COLORS[prospect.vertical || ""] || NICHE_COLORS.default;
   const bookingState = getBookingState(prospect, meeting);
   const compositeGrade = computeCompositeGrade(prospect, calls);
@@ -168,6 +170,14 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
           {prospect.chatPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Chat</Badge>}
           {prospect.onlineBookingPresent && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">Has Booking</Badge>}
           {prospect.contactStatus === 'replied' && <Badge className="text-[10px] bg-green-500 text-white border-0">📱 Replied</Badge>}
+          {prospect.activeSequenceStatus === 'active' && (
+            <Badge className="text-[10px] bg-indigo-500 text-white border-0">
+              🔄 In sequence — Day {Math.min(7, Math.floor((Date.now() - new Date(prospect.activeSequenceStartedAt || Date.now()).getTime()) / 86400000))} of 7
+            </Badge>
+          )}
+          {prospect.activeSequenceStatus === 'paused' && (
+            <Badge className="text-[10px] bg-gray-400 text-white border-0">⏸️ Sequence paused</Badge>
+          )}
           {prospect.siteHealthGrade && (
             <Badge variant="outline" className={`text-[10px] ${
               prospect.siteHealthGrade === 'D' ? 'bg-red-50 text-red-600 border-red-200' :
@@ -248,6 +258,76 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
           )}
           {auditing && (
             <span className="text-xs text-sky-500 animate-pulse px-2">Auditing...</span>
+          )}
+          {!prospect.activeSequenceId && (compositeGrade === 'A' || compositeGrade === 'B') && !startingSequence && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs min-h-[36px] px-3 rounded-lg border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+              onClick={async () => {
+                setStartingSequence(true)
+                try {
+                  await fetch('/api/sequences/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prospect_id: prospect.id }),
+                  })
+                  window.location.reload()
+                } catch (e) { console.error(e) }
+                setStartingSequence(false)
+              }}
+            >
+              <Play className="w-3 h-3 mr-1" /> Start Sequence
+            </Button>
+          )}
+          {startingSequence && (
+            <span className="text-xs text-indigo-500 animate-pulse px-2">Starting...</span>
+          )}
+          {prospect.activeSequenceId && prospect.activeSequenceStatus === 'active' && !seqAction && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs min-h-[36px] px-2 rounded-lg border-gray-200 text-gray-600 hover:bg-gray-50"
+                onClick={async () => {
+                  setSeqAction(true)
+                  await fetch(`/api/sequences/${prospect.activeSequenceId}/pause`, { method: 'POST' })
+                  window.location.reload()
+                }}
+              >
+                <Pause className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs min-h-[36px] px-2 rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                onClick={async () => {
+                  setSeqAction(true)
+                  await fetch(`/api/sequences/${prospect.activeSequenceId}/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: 'manual_stop' }),
+                  })
+                  window.location.reload()
+                }}
+              >
+                <Square className="w-3 h-3" />
+              </Button>
+            </>
+          )}
+          {prospect.activeSequenceId && prospect.activeSequenceStatus === 'paused' && !seqAction && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs min-h-[36px] px-3 rounded-lg border-green-200 text-green-600 hover:bg-green-50"
+              onClick={async () => {
+                setSeqAction(true)
+                await fetch(`/api/sequences/${prospect.activeSequenceId}/pause`, { method: 'POST' })
+                window.location.reload()
+              }}
+            >
+              <Play className="w-3 h-3 mr-1" /> Resume
+            </Button>
           )}
           {(prospect.vertical === 'field_service' || ['plumbing', 'hvac', 'electrical', 'garage_door', 'appliance'].includes(prospect.niche || '')) && (
             <Button size="sm" variant="outline" className="text-xs min-h-[36px] px-3 rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50 ml-auto" asChild>
