@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
 import { getSequenceSteps, getProofUrl } from '@/lib/sequence-templates'
 
 function getSupabase() {
@@ -13,7 +14,30 @@ function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-async function sendEmail(to: string, subject: string, body: string): Promise<boolean> {
+function escapeHtml(input: string) {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function buildTrackedUrls(token: string | undefined, proofUrl: string) {
+  const safeToken = token || ''
+  const encodedTarget = encodeURIComponent(proofUrl)
+  return {
+    openPixel: `https://sales-os-v1.vercel.app/api/track/email-open?ref=${safeToken}`,
+    trackedProofUrl: `https://sales-os-v1.vercel.app/api/track/email-click?ref=${safeToken}&to=${encodedTarget}`,
+  }
+}
+
+function buildEmailHtml(text: string, trackedProofUrl: string, openPixel: string) {
+  const linked = text.replace(/https?:\/\/\S+/g, trackedProofUrl)
+  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;white-space:pre-line">${escapeHtml(linked)}</div><img src="${openPixel}" width="1" height="1" style="display:block" alt="" />`
+}
+
+async function sendEmail(to: string, subject: string, text: string, html: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
     console.error('RESEND_API_KEY not set')
@@ -21,26 +45,15 @@ async function sendEmail(to: string, subject: string, body: string): Promise<boo
   }
 
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Josh Mellender <josh@cogrow.ai>',
-        to: [to],
-        subject,
-        text: body,
-      }),
+    const resend = new Resend(apiKey)
+    await resend.emails.send({
+      from: 'Paul @ CoGrow <paul@cogrow.ai>',
+      to: [to],
+      replyTo: 'paul@cogrow.ai',
+      subject,
+      text,
+      html,
     })
-
-    if (!res.ok) {
-      const err = await res.text()
-      console.error(`Resend error: ${res.status} ${err}`)
-      return false
-    }
-
     return true
   } catch (error) {
     console.error('Email send error:', error)
@@ -211,6 +224,7 @@ export async function POST(request: NextRequest) {
 
     const proofUrl = getProofUrl(p)
     const message = template.getMessage(p, proofUrl)
+    const { openPixel, trackedProofUrl } = buildTrackedUrls(p.trackingToken, proofUrl)
 
     let success = false
 
@@ -218,7 +232,8 @@ export async function POST(request: NextRequest) {
       const email = prospect.email
       if (email) {
         const subject = template.getSubject?.(p) || `Update from CoGrow about ${prospect.business_name}`
-        success = await sendEmail(email, subject, message)
+        const html = buildEmailHtml(message, trackedProofUrl, openPixel)
+        success = await sendEmail(email, subject, message, html)
       } else {
         console.warn(`No email for prospect ${prospect.id} — skipping email step`)
       }

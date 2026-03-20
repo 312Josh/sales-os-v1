@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { CallLog, FollowUpDraft, InquiryTest, MeetingRecord, ProposalRecord, Prospect, SalesOsData } from '@/lib/types'
+import type { ActivityItem, CallLog, FollowUpDraft, InquiryTest, MeetingRecord, ProposalRecord, Prospect, SalesOsData } from '@/lib/types'
 
 function getClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -128,7 +128,7 @@ function mapInquiryToRow(item: InquiryTest) {
 
 export async function readSupabaseData(): Promise<SalesOsData> {
   const supabase = getClient()
-  const [prospects, calls, followUps, meetings, proposals, inquiryTests, sequences] = await Promise.all([
+  const [prospects, calls, followUps, meetings, proposals, inquiryTests, sequences, activity] = await Promise.all([
     supabase.from('prospects').select('*').order('priority_score', { ascending: false }),
     supabase.from('call_logs').select('*').order('called_at', { ascending: false }),
     supabase.from('follow_up_drafts').select('*').order('created_at', { ascending: false }),
@@ -136,6 +136,7 @@ export async function readSupabaseData(): Promise<SalesOsData> {
     supabase.from('proposals').select('*').order('id', { ascending: false }),
     supabase.from('inquiry_tests').select('*').order('id', { ascending: false }),
     supabase.from('sequences').select('*').in('status', ['active', 'paused']),
+    supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50),
   ])
 
   if ([prospects, calls, followUps, meetings, proposals, inquiryTests].some((r) => r.error)) {
@@ -252,6 +253,13 @@ export async function readSupabaseData(): Promise<SalesOsData> {
       responseTimeMinutes: row.response_time_minutes || undefined,
       grade: row.grade || undefined,
       testStatus: row.test_status,
+    })),
+    activity: (activity.data || []).map((row: any): ActivityItem => ({
+      id: row.id,
+      prospectId: row.prospect_id,
+      eventType: row.event_type,
+      summary: row.summary,
+      createdAt: row.created_at,
     })),
     bookingLinks: {
       Josh: process.env.CALCOM_BOOKING_URL_JOSH || 'https://cal.com/josh-mellender-f4rrsl',

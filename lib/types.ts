@@ -151,6 +151,14 @@ export type ProposalRecord = {
   status: 'not_started' | 'draft' | 'sent' | 'paid'
 }
 
+export type ActivityItem = {
+  id: string
+  prospectId: string
+  eventType: string
+  summary: string
+  createdAt: string
+}
+
 export type SalesOsData = {
   markets: string[]
   niches: string[]
@@ -160,5 +168,6 @@ export type SalesOsData = {
   meetings: MeetingRecord[]
   proposals: ProposalRecord[]
   inquiryTests: InquiryTest[]
+  activity: ActivityItem[]
   bookingLinks: Record<'Josh' | 'Paul', string>
 }

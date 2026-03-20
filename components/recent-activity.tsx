@@ -1,68 +1,57 @@
-import type { CallLog, FollowUpDraft, MeetingRecord, Prospect } from '@/lib/types'
+import type { ActivityItem, Prospect } from '@/lib/types'
+
+function relativeTime(dateString: string) {
+  const diff = Date.now() - new Date(dateString).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
 
 export function RecentActivity({
-  calls,
-  followUps,
-  meetings,
+  activity,
   prospects,
 }: {
-  calls: CallLog[]
-  followUps: FollowUpDraft[]
-  meetings: MeetingRecord[]
+  activity: ActivityItem[]
   prospects: Prospect[]
 }) {
-  const activity = [
-    ...calls.slice(0, 5).map((call) => ({
-      id: call.id,
-      title: `Call logged: ${call.outcome}`,
-      subtitle: `${call.prospectId} • ${call.nextStep || 'No next step'}`,
-      at: call.calledAt,
-    })),
-    ...followUps.slice(0, 5).map((item) => ({
-      id: item.id,
-      title: `Follow-up draft: ${item.channel}`,
-      subtitle: `${item.prospectId} • ${item.status}`,
-      at: item.createdAt,
-    })),
-    ...meetings.slice(0, 5).map((meeting) => ({
-      id: meeting.id,
-      title: `Meeting handoff: ${meeting.status}`,
-      subtitle: `${meeting.prospectId} • ${meeting.rep}`,
-      at: meeting.bookedTime || meeting.proposedTime || new Date().toISOString(),
-    })),
-  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 8)
-
-  const todaysPriorities = prospects
-    .filter((p) => ['call_queued', 'called', 'follow_up_sent'].includes(p.pipelineStage))
-    .sort((a, b) => b.priorityScore - a.priorityScore)
-    .slice(0, 5)
+  const prospectById = new Map(prospects.map((p) => [p.id, p]))
 
   return (
-    <div className="stack">
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Today’s priorities</h2>
-        <div className="stack">
-          {todaysPriorities.map((p) => (
-            <div key={p.id} style={{ borderTop: '1px solid #e7ebf3', paddingTop: 12 }}>
-              <strong>{p.businessName}</strong>
-              <div className="muted">{p.assignedRep} • {p.pipelineStage}</div>
-              <div className="muted">Reason: {p.priorityReason}</div>
-            </div>
-          ))}
-        </div>
+    <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-bold text-sales-900">Recent Activity</h2>
+        <span className="text-xs text-slate-400">Last 50 events</span>
       </div>
 
-      <div className="card">
-        <h3 style={{ marginTop: 0 }}>Recent activity</h3>
-        <div className="stack">
-          {activity.length === 0 ? <div className="muted">No activity recorded yet.</div> : activity.map((item) => (
-            <div key={item.id} style={{ borderTop: '1px solid #e7ebf3', paddingTop: 12 }}>
-              <strong>{item.title}</strong>
-              <div className="muted">{item.subtitle}</div>
-              <div className="muted">{new Date(item.at).toLocaleString()}</div>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-3">
+        {activity.length === 0 ? (
+          <div className="text-sm text-slate-500">No activity yet.</div>
+        ) : (
+          activity.slice(0, 20).map((item) => {
+            const prospect = prospectById.get(item.prospectId)
+            return (
+              <div key={item.id} className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-sales-900 break-words">{item.summary}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {prospect?.businessName || item.prospectId}
+                      {prospect?.assignedRep ? ` • ${prospect.assignedRep}` : ''}
+                      {item.eventType ? ` • ${item.eventType}` : ''}
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-slate-400 shrink-0" title={new Date(item.createdAt).toLocaleString()}>
+                    {relativeTime(item.createdAt)}
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
     </div>
   )

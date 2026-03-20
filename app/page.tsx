@@ -3,6 +3,8 @@ import { CallQueue } from '@/components/call-queue'
 import { StaleFollowUpWedge } from '@/components/stale-followup-wedge'
 import { TodaysFocus } from '@/components/todays-focus'
 import { CallReadySection } from '@/components/call-ready'
+import { RecentActivity } from '@/components/recent-activity'
+import { SequenceAdminControls } from '@/components/sequence-admin-controls'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +46,12 @@ export default async function Home() {
 
       {/* Stale Follow-Up Wedge */}
       <StaleFollowUpWedge prospects={data.prospects} calls={data.calls} followUps={data.followUps} />
+
+      {/* Admin Controls */}
+      <SequenceAdminControls />
+
+      {/* Recent Activity */}
+      <RecentActivity activity={data.activity} prospects={data.prospects} />
 
       {/* Call Queue */}
       <CallQueue prospects={queue} meetings={data.meetings} calls={data.calls} />
