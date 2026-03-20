@@ -115,9 +115,9 @@ export function getGradeColor(grade: CompositeGrade): string {
 
 export function getGradeLabel(grade: CompositeGrade): string {
   switch (grade) {
-    case 'A': return 'Call Now'
-    case 'B': return 'High Priority'
-    case 'C': return 'Medium'
-    case 'D': return 'Low Priority'
+    case 'A': return 'Broken / High Opportunity'
+    case 'B': return 'Needs Work'
+    case 'C': return 'Decent'
+    case 'D': return 'Clean / Lower Priority'
   }
 }

@@ -152,8 +152,11 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 min-w-0">
-            <Badge className={`text-[11px] font-bold px-2 py-0.5 ${gradeColor} shrink-0`}>{compositeGrade}</Badge>
-            <h3 className="font-bold text-sales-900 text-[15px] leading-tight truncate">{prospect.businessName}</h3>
+            <Badge className={`text-[11px] font-bold px-2 py-0.5 ${gradeColor} shrink-0`} title={gradeLabel}>{compositeGrade}</Badge>
+            <div className="min-w-0">
+              <h3 className="font-bold text-sales-900 text-[15px] leading-tight truncate">{prospect.businessName}</h3>
+              <div className="text-[11px] text-slate-500 truncate">{gradeLabel}</div>
+            </div>
           </div>
           <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 ${stageClass} shrink-0`}>
             {stageLabel(prospect.pipelineStage)}

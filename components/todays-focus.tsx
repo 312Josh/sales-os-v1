@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Prospect, CallLog, FollowUpDraft, MeetingRecord } from "@/lib/types"
 import { getBookingState } from "@/lib/booking-state"
-import { computeCompositeGrade, getGradeColor } from "@/lib/composite-grade"
+import { computeCompositeGrade, getGradeColor, getGradeLabel } from "@/lib/composite-grade"
 
 type FocusAction = {
   prospect: Prospect
@@ -122,6 +122,7 @@ export function TodaysFocus({
           const Icon = item.icon
           const grade = computeCompositeGrade(item.prospect, calls)
           const gradeColor = getGradeColor(grade)
+          const gradeLabel = getGradeLabel(grade)
           return (
             <Card key={`${item.prospect.id}-${idx}`} className="hover:shadow-sm transition-shadow">
               <CardContent className="py-3 px-4 flex items-center gap-3">
@@ -131,6 +132,7 @@ export function TodaysFocus({
                     <span className="font-semibold text-sm text-sales-900 truncate">{item.prospect.businessName}</span>
                     <Badge variant="outline" className="text-[9px] px-1.5 shrink-0">{item.prospect.assignedRep}</Badge>
                   </div>
+                  <p className="text-[11px] text-slate-500 truncate">{gradeLabel}</p>
                   <p className="text-xs text-slate-500 truncate">{item.reason}</p>
                 </div>
                 <div className="shrink-0">
