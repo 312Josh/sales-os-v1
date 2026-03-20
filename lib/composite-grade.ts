@@ -50,16 +50,26 @@ function getResponseScore(prospect: Prospect, calls: CallLog[]): number {
 }
 
 function getSiteHealthScore(prospect: Prospect): number {
-  if (!prospect.siteHealthGrade) return 50 // unaudited = neutral
+  // Failed audits or obvious bad-site signals should rank high for sales.
+  if (prospect.siteAuditStatus === 'failed') return 95
+  if (!prospect.siteHealthGrade) return 55 // unaudited = slightly above neutral
 
   const gradeScores: Record<string, number> = {
-    D: 100, // worst site = best sales opportunity
-    C: 75,
-    B: 50,
-    A: 25, // great site = harder to sell improvement
+    D: 100,
+    C: 85,
+    B: 65,
+    A: 30,
   }
 
-  return gradeScores[prospect.siteHealthGrade] ?? 50
+  let score = gradeScores[prospect.siteHealthGrade] ?? 55
+
+  if ((prospect.brokenLinksCount || 0) >= 3) score += 10
+  if ((prospect.missingAltCount || 0) >= 10) score += 8
+  if ((prospect.missingMetaCount || 0) >= 1) score += 5
+  if ((prospect.pagespeedScore ?? 100) < 50) score += 12
+  if ((prospect.pagespeedScore ?? 100) >= 85) score -= 10
+
+  return Math.max(0, Math.min(100, score))
 }
 
 function getNicheFitScore(prospect: Prospect): number {

@@ -108,24 +108,26 @@ export function gradeSiteAudit(metrics: {
   missingMetaCount?: number
   missingAltCount?: number
 }): SiteHealthGrade {
-  const score = metrics.pagespeedScore ?? 100
-  const lcp = metrics.lcpMs ?? 0
-  const cls = metrics.clsScore ?? 0
+  const score = metrics.pagespeedScore
+  const lcp = metrics.lcpMs
+  const cls = metrics.clsScore
   const broken = metrics.brokenLinksCount ?? 0
   const missingMeta = metrics.missingMetaCount ?? 0
   const missingAlt = metrics.missingAltCount ?? 0
 
+  // Severity model: worse sites should surface harder for sales.
+  // Weight on-page problems more heavily because PSI is often unavailable.
   const riskPoints =
-    (score < 50 ? 3 : score < 70 ? 2 : score < 85 ? 1 : 0) +
-    (lcp > 4000 ? 3 : lcp > 2500 ? 2 : lcp > 1800 ? 1 : 0) +
-    (cls > 0.25 ? 3 : cls > 0.1 ? 2 : cls > 0.05 ? 1 : 0) +
-    (broken >= 4 ? 3 : broken >= 1 ? 1 : 0) +
-    (missingMeta >= 4 ? 2 : missingMeta >= 1 ? 1 : 0) +
-    (missingAlt >= 8 ? 2 : missingAlt >= 3 ? 1 : 0)
+    (score === undefined ? 1 : score < 35 ? 4 : score < 50 ? 3 : score < 70 ? 2 : score < 85 ? 1 : 0) +
+    (lcp === undefined ? 0 : lcp > 5000 ? 4 : lcp > 3500 ? 3 : lcp > 2500 ? 2 : lcp > 1800 ? 1 : 0) +
+    (cls === undefined ? 0 : cls > 0.3 ? 4 : cls > 0.18 ? 3 : cls > 0.1 ? 2 : cls > 0.05 ? 1 : 0) +
+    (broken >= 6 ? 5 : broken >= 3 ? 4 : broken >= 1 ? 2 : 0) +
+    (missingMeta >= 1 ? 2 : 0) +
+    (missingAlt >= 20 ? 4 : missingAlt >= 10 ? 3 : missingAlt >= 5 ? 2 : missingAlt >= 1 ? 1 : 0)
 
-  if (riskPoints >= 9) return 'D'
-  if (riskPoints >= 5) return 'C'
-  if (riskPoints >= 2) return 'B'
+  if (riskPoints >= 11) return 'D'
+  if (riskPoints >= 7) return 'C'
+  if (riskPoints >= 3) return 'B'
   return 'A'
 }
 
