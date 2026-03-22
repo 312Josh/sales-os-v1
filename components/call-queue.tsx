@@ -55,10 +55,12 @@ function buildGoogleVoiceSmsUrl(phone: string, body: string): string {
 }
 
 export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects: Prospect[]; meetings?: MeetingRecord[]; calls?: CallLog[] }) {
+  const [repFilter, setRepFilter] = useState("all");
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [marketFilter, setMarketFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
 
+  const reps = [...new Set(prospects.map((p) => p.assignedRep || "unknown"))].sort();
   const niches = [...new Set(prospects.map((p) => p.vertical || p.niche || "unknown"))].sort();
   const markets = [...new Set(prospects.map((p) => p.marketTag || p.market || "unknown"))].sort();
   const stages = [...new Set(prospects.map((p) => p.pipelineStage))].sort();
@@ -66,6 +68,7 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
   const filtered = prospects.filter((p) => {
     const v = p.vertical || p.niche || "unknown";
     const m = p.marketTag || p.market || "unknown";
+    if (repFilter !== "all" && p.assignedRep !== repFilter) return false;
     if (verticalFilter !== "all" && v !== verticalFilter) return false;
     if (marketFilter !== "all" && m !== marketFilter) return false;
     if (stageFilter !== "all" && p.pipelineStage !== stageFilter) return false;
@@ -78,6 +81,16 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
       <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 mb-5">
         <h2 className="text-lg font-bold text-sales-900 sm:mr-auto">Call Queue</h2>
         <div className="flex flex-wrap gap-2">
+          <select
+            value={repFilter}
+            onChange={(e) => setRepFilter(e.target.value)}
+            className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-h-[44px]"
+          >
+            <option value="all">All Reps</option>
+            {reps.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
           <select
             value={verticalFilter}
             onChange={(e) => setVerticalFilter(e.target.value)}
