@@ -237,38 +237,45 @@ export async function POST(request: NextRequest) {
       } else {
         console.warn(`No email for prospect ${prospect.id} — skipping email step`)
       }
-    } else if (template.channel === 'sms') {
-      const phone = prospect.phone
-      if (phone) {
-        success = await sendSms(phone, message)
-      } else {
-        console.warn(`No phone for prospect ${prospect.id} — skipping SMS step`)
-      }
+
+      await supabase.from('sequence_steps').update({
+        status: success ? 'sent' : 'failed',
+        sent_at: success ? new Date().toISOString() : null,
+      }).eq('id', step.id)
+
+      await supabase.from('sequences').update({
+        current_step: step.step_number,
+      }).eq('id', seq.id)
+
+      await supabase.from('activity_log').insert({
+        id: createId('activity'),
+        prospect_id: seq.prospect_id,
+        event_type: `sequence_step_${success ? 'sent' : 'failed'}`,
+        summary: `📧 Step ${step.step_number + 1}/5 ${success ? 'sent' : 'FAILED'} — email (Day ${template.dayOffset})`,
+      })
+
+      if (success) sent++
+      else failed++
+      processed++
+      continue
     }
 
-    // Update step status
-    await supabase.from('sequence_steps').update({
-      status: success ? 'sent' : 'failed',
-      sent_at: success ? new Date().toISOString() : null,
-    }).eq('id', step.id)
+    if (template.channel === 'sms') {
+      // Vercel does NOT send SMS anymore. Local worker picks up pending SMS steps.
+      await supabase.from('activity_log').insert({
+        id: createId('activity'),
+        prospect_id: seq.prospect_id,
+        event_type: 'sequence_step_pending_worker',
+        summary: `📱 Step ${step.step_number + 1}/5 pending — waiting for local SMS worker (Day ${template.dayOffset})`,
+      })
 
-    // Update sequence current_step
-    await supabase.from('sequences').update({
-      current_step: step.step_number,
-    }).eq('id', seq.id)
+      await supabase.from('sequences').update({
+        current_step: step.step_number,
+      }).eq('id', seq.id)
 
-    // Activity log
-    const channelLabel = template.channel === 'email' ? '📧' : '📱'
-    await supabase.from('activity_log').insert({
-      id: createId('activity'),
-      prospect_id: seq.prospect_id,
-      event_type: `sequence_step_${success ? 'sent' : 'failed'}`,
-      summary: `${channelLabel} Step ${step.step_number + 1}/5 ${success ? 'sent' : 'FAILED'} — ${template.channel} (Day ${template.dayOffset})`,
-    })
-
-    if (success) sent++
-    else failed++
-    processed++
+      processed++
+      continue
+    }
   }
 
   return NextResponse.json({ processed, sent, failed, autoStopped })
