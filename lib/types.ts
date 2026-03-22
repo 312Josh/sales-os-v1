@@ -71,6 +71,11 @@ export type Prospect = {
   activeSequenceStatus?: string
   activeSequenceStep?: number
   activeSequenceStartedAt?: string
+  proofUrl?: string
+  proofScreenshotUrl?: string
+  proofVideoUrl?: string
+  proofStatus?: 'none' | 'building' | 'ready'
+  proofGeneratedAt?: string
   contactFormPresent?: boolean
   chatPresent?: boolean
   onlineBookingPresent?: boolean

@@ -5,6 +5,7 @@ import { TodaysFocus } from '@/components/todays-focus'
 import { CallReadySection } from '@/components/call-ready'
 import { RecentActivity } from '@/components/recent-activity'
 import { SequenceAdminControls } from '@/components/sequence-admin-controls'
+import { TestEmailButton } from '@/components/test-email-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,7 @@ export default async function Home() {
 
       {/* Admin Controls */}
       <SequenceAdminControls />
+      <TestEmailButton />
 
       {/* Recent Activity */}
       <RecentActivity activity={data.activity} prospects={data.prospects} />
