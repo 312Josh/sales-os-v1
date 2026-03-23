@@ -56,6 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const origin = new URL(request.url).origin
     const screenshotUrl = templates.screenshotUrl.startsWith('http') ? templates.screenshotUrl : `${origin}${templates.screenshotUrl}`
+    const heroAssetUrl = templates.gifUrl || screenshotUrl
     const resend = new Resend(key)
     const result = await resend.emails.send({
       from: 'Paul @ CoGrow <paul@cogrow.ai>',
@@ -67,8 +68,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         <p>Hi ${prospect.decision_maker || 'there'},</p>
         <p>I put together a quick proof page for <strong>${prospect.business_name}</strong> showing how the site could convert more leads.</p>
         <p><a href="${templates.proofUrl}">Open proof page</a></p>
-        <p><img src="${screenshotUrl}" alt="${prospect.business_name} proof screenshot" style="max-width:100%;border:1px solid #e2e8f0;border-radius:12px" /></p>
+        ${heroAssetUrl ? `<p><img src="${heroAssetUrl}" alt="${prospect.business_name} proof asset" style="max-width:100%;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
         <p>${prospect.site_audit_summary || prospect.priority_reason || 'There are clear conversion leaks on the site.'}</p>
+        ${templates.videoUrl ? `<p style="margin-top:12px"><a href="${templates.videoUrl}">Watch the walkthrough asset</a></p>` : ''}
         <p>— Paul<br/>CoGrow</p>
       </div>`,
     })
