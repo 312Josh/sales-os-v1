@@ -286,14 +286,14 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
                     <span>Email subject + body</span>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(`Subject: ${outreach.emailSubject}\n\n${outreach.emailBody}`)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
-                      <Button size="sm" className="h-7 text-[11px] bg-violet-600 hover:bg-violet-500" disabled={sendingEmail} onClick={async () => {
+                      <Button size="sm" className="h-7 text-[11px] bg-violet-600 hover:bg-violet-500" disabled={sendingEmail || !prospect.email} title={!prospect.email ? 'Prospect has no email on file' : 'Send via Resend'} onClick={async () => {
                         setSendingEmail(true)
                         const res = await fetch(`/api/prospects/${prospect.id}/send-email`, { method: 'POST' })
                         const json = await res.json().catch(() => ({}))
                         if (!res.ok) alert(json.error || 'Email send failed')
                         else alert('Email sent')
                         setSendingEmail(false)
-                      }}><Mail className="w-3 h-3 mr-1" />{sendingEmail ? 'Sending...' : 'Send Email'}</Button>
+                      }}><Mail className="w-3 h-3 mr-1" />{!prospect.email ? 'No Email' : sendingEmail ? 'Sending...' : 'Send Email'}</Button>
                     </div>
                   </div>
                   <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap"><strong>Subject:</strong> {outreach.emailSubject}{'\n\n'}{outreach.emailBody}</div>

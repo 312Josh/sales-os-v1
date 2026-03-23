@@ -5,4 +5,13 @@ export const OUTREACH_KIT_PROSPECT_IDS = new Set([
   'donna-boston-architects-and-builders',
   'donna-boston-harbor-water-restoration',
   'donna-county-tree-service-inc',
+  'donna-c-j-tree-services',
+  'donna-boston-paint-company',
+  'donna-excel-electrical-technologies',
+  'donna-pro-electric-inc',
+  'donna-a-electrical-services',
+  'donna-armor-garage-doors-ltd',
+  'donna-stephco-cleaning-restoration',
+  'donna-k-j-heating-and-cooling',
+  'donna-avid-engineers',
 ])
