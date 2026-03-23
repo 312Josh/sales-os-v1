@@ -12,6 +12,7 @@ import { computeCompositeGrade, getGradeColor, getGradeLabel } from "@/lib/compo
 import { runSingleAuditAction } from "@/lib/actions";
 import type { Prospect, MeetingRecord, CallLog } from "@/lib/types";
 import { buildOutreachTemplates } from "@/lib/outreach-copy";
+import { OUTREACH_KIT_PROSPECT_IDS } from "@/lib/outreach-targets";
 
 const NICHE_COLORS: Record<string, string> = {
   garage_door: "bg-orange-100 text-orange-700 border-orange-200",
@@ -258,14 +259,18 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
           </p>
         )}
 
-        {prospect.id === 'donna-boston-moving-service-llc' && (
+        {OUTREACH_KIT_PROSPECT_IDS.has(prospect.id) && (
           <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
             <div className="text-xs font-semibold text-violet-900">Paul outreach kit</div>
             <div className="grid gap-3 md:grid-cols-[180px_1fr]">
               <div className="space-y-2">
-                <a href={outreach.screenshotUrl} target="_blank" rel="noreferrer">
-                  <Image src={outreach.screenshotUrl} alt={`${prospect.businessName} screenshot`} width={320} height={220} className="w-full rounded-lg border border-violet-200" />
-                </a>
+                {prospect.proofScreenshotUrl ? (
+                  <a href={outreach.screenshotUrl} target="_blank" rel="noreferrer">
+                    <Image src={outreach.screenshotUrl} alt={`${prospect.businessName} screenshot`} width={320} height={220} className="w-full rounded-lg border border-violet-200" />
+                  </a>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-violet-200 bg-white p-3 text-xs text-slate-500">Screenshot pending proof build</div>
+                )}
                 <a href={outreach.proofUrl} target="_blank" rel="noreferrer" className="text-xs text-violet-700 hover:underline break-all">{outreach.proofUrl}</a>
               </div>
               <div className="space-y-3">
