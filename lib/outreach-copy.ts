@@ -28,7 +28,7 @@ export function buildOutreachTemplates(prospect: Prospect) {
 
   const iMessageText = `Hey ${name} — I mocked up a quick improvement concept for ${prospect.businessName}. The big issue is that ${issue}. Here’s the proof page: ${proofUrl}`
   const emailSubject = `${prospect.businessName}: quick idea to improve lead conversion`
-  const emailBody = `Hi ${name},\n\nI put together a quick proof page for ${prospect.businessName}. The main gap I noticed is that ${issue}.\n\nProof page: ${proofUrl}\nScreenshot: ${screenshotUrl}\n\nAudit note: ${auditLine}.\n\nIf useful, I can walk you through the changes and how they'd tighten up conversion.\n\n— Paul\nCoGrow`
+  const emailBody = `Hi ${name},\n\nI put together a quick proof page for ${prospect.businessName}. The main gap I noticed is that ${issue}.\n\nProof page: ${proofUrl}\n\nAudit note: ${auditLine}.\n\nIf useful, I can walk you through the changes and how they'd tighten up conversion.\n\n— Paul\nCoGrow`
   const smsFallbackText = `Hi ${name} — Paul from CoGrow. I made a quick proof page for ${prospect.businessName}: ${proofUrl}. Main issue: ${issue}. Want me to send the screenshot too?`
 
   return { iMessageText, emailSubject, emailBody, smsFallbackText, screenshotUrl, proofUrl }
