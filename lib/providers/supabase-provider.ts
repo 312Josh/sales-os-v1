@@ -166,6 +166,7 @@ export async function readSupabaseData(): Promise<SalesOsData> {
       suburb: row.suburb,
       website: row.website,
       phone: row.phone,
+      email: row.email || undefined,
       contactFormUrl: row.contact_form_url,
       decisionMaker: row.decision_maker,
       linkedInUrl: row.linkedin_url,

@@ -87,6 +87,7 @@ export type Prospect = {
   suburb: string
   website: string
   phone: string
+  email?: string
   contactFormUrl: string
   decisionMaker: string
   linkedInUrl: string

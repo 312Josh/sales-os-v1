@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X, Search, Play, Pause, Square } from "lucide-react";
+import Image from "next/image";
+import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X, Search, Play, Pause, Square, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { getBookingState, getBookingStateLabel } from "@/lib/booking-state";
 import { computeCompositeGrade, getGradeColor, getGradeLabel } from "@/lib/composite-grade";
 import { runSingleAuditAction } from "@/lib/actions";
 import type { Prospect, MeetingRecord, CallLog } from "@/lib/types";
+import { buildOutreachTemplates } from "@/lib/outreach-copy";
 
 const NICHE_COLORS: Record<string, string> = {
   garage_door: "bg-orange-100 text-orange-700 border-orange-200",
@@ -52,6 +54,10 @@ function buildGoogleVoiceSmsUrl(phone: string, body: string): string {
   // Google Voice SMS via web
   const cleanPhone = phone.replace(/\D/g, "");
   return `https://voice.google.com/u/0/messages?compose=${cleanPhone}&text=${encodeURIComponent(body)}`;
+}
+
+async function copyText(text: string) {
+  await navigator.clipboard.writeText(text)
 }
 
 export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects: Prospect[]; meetings?: MeetingRecord[]; calls?: CallLog[] }) {
@@ -158,6 +164,8 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
 
   const introSms = buildSmsBody(prospect, "intro");
   const noAnswerSms = buildSmsBody(prospect, "no_answer");
+  const outreach = buildOutreachTemplates(prospect);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   return (
     <Card className="group hover:shadow-md hover:border-blue-200 transition-all duration-200">
@@ -248,6 +256,53 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
           <p className="text-xs text-slate-500 italic line-clamp-2 mb-4 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
             💡 {hook}
           </p>
+        )}
+
+        {prospect.id === 'donna-boston-moving-service-llc' && (
+          <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
+            <div className="text-xs font-semibold text-violet-900">Paul outreach kit</div>
+            <div className="grid gap-3 md:grid-cols-[180px_1fr]">
+              <div className="space-y-2">
+                <a href={outreach.screenshotUrl} target="_blank" rel="noreferrer">
+                  <Image src={outreach.screenshotUrl} alt={`${prospect.businessName} screenshot`} width={320} height={220} className="w-full rounded-lg border border-violet-200" />
+                </a>
+                <a href={outreach.proofUrl} target="_blank" rel="noreferrer" className="text-xs text-violet-700 hover:underline break-all">{outreach.proofUrl}</a>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                    <span>iMessage text</span>
+                    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(outreach.iMessageText)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
+                  </div>
+                  <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap">{outreach.iMessageText}</div>
+                </div>
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                    <span>Email subject + body</span>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(`Subject: ${outreach.emailSubject}\n\n${outreach.emailBody}`)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
+                      <Button size="sm" className="h-7 text-[11px] bg-violet-600 hover:bg-violet-500" disabled={sendingEmail} onClick={async () => {
+                        setSendingEmail(true)
+                        const res = await fetch(`/api/prospects/${prospect.id}/send-email`, { method: 'POST' })
+                        const json = await res.json().catch(() => ({}))
+                        if (!res.ok) alert(json.error || 'Email send failed')
+                        else alert('Email sent')
+                        setSendingEmail(false)
+                      }}><Mail className="w-3 h-3 mr-1" />{sendingEmail ? 'Sending...' : 'Send Email'}</Button>
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap"><strong>Subject:</strong> {outreach.emailSubject}{'\n\n'}{outreach.emailBody}</div>
+                </div>
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                    <span>SMS fallback</span>
+                    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(outreach.smsFallbackText)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
+                  </div>
+                  <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap">{outreach.smsFallbackText}</div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Action buttons */}
