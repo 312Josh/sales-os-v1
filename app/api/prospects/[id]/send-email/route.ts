@@ -65,13 +65,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       subject: templates.emailSubject,
       text: templates.emailBody,
       html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-        <p>Hi ${prospect.decision_maker || 'there'},</p>
-        <p>I put together a quick proof page for <strong>${prospect.business_name}</strong> showing how the site could convert more leads.</p>
-        <p><a href="${templates.proofUrl}">Open proof page</a></p>
-        ${heroAssetUrl ? `<p><img src="${heroAssetUrl}" alt="${prospect.business_name} proof asset" style="max-width:100%;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
-        <p>${prospect.site_audit_summary || prospect.priority_reason || 'There are clear conversion leaks on the site.'}</p>
-        ${templates.videoUrl ? `<p style="margin-top:12px"><a href="${templates.videoUrl}">Watch the walkthrough asset</a></p>` : ''}
-        <p>— Paul<br/>CoGrow</p>
+        <p>Hey ${prospect.decision_maker || 'there'},</p>
+        <p>I put together a new website for <strong>${prospect.business_name}</strong>. Take a look: <a href="${templates.proofUrl}">${templates.proofUrl}</a>.</p>
+        ${heroAssetUrl ? `<p><img src="${heroAssetUrl}" alt="${prospect.business_name} preview" style="display:block;max-width:100%;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
+        <p>If you like what you see, I'd love to spend 10 minutes walking you through it.</p>
+        <p>— Paul, CoGrow</p>
       </div>`,
     })
 
