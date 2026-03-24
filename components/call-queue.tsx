@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Phone, Globe, Mail, MessageSquare, CheckCircle, ExternalLink, PhoneMissed, Sparkles, ChevronDown, ChevronUp, X, Search, Play, Pause, Square, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -264,9 +263,9 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
             <div className="text-xs font-semibold text-violet-900">Paul outreach kit</div>
             <div className="grid gap-3 md:grid-cols-[180px_1fr]">
               <div className="space-y-2">
-                {outreach.screenshotUrl ? (
-                  <a href={outreach.screenshotUrl} target="_blank" rel="noreferrer">
-                    <Image src={outreach.screenshotUrl} alt={prospect.businessName} width={320} height={220} className="w-full rounded-lg border border-violet-200" unoptimized />
+                {prospect.proofScreenshotUrl ? (
+                  <a href={prospect.proofScreenshotUrl} target="_blank" rel="noreferrer">
+                    <img src={prospect.proofScreenshotUrl} alt={prospect.businessName} className="w-full rounded-lg border border-violet-200" />
                   </a>
                 ) : (
                   <div className="rounded-lg border border-dashed border-violet-200 bg-white p-3 text-xs text-slate-500">Screenshot pending proof build</div>

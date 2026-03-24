@@ -3,7 +3,7 @@ import { getProspectDriveAssets } from '@/lib/drive-assets'
 
 export function getProspectDisplayName(prospect: Prospect) {
   const name = prospect.decisionMaker?.trim()
-  return name || 'there'
+  return name && name.length > 0 ? name : 'there'
 }
 
 export function getProspectGreeting(prospect: Prospect) {

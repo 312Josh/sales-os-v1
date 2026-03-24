@@ -54,13 +54,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       siteAuditSummary: prospect.site_audit_summary,
     } as any)
 
-    const origin = new URL(request.url).origin
-    const fallbackScreenshot = templates.screenshotUrl
-      ? (templates.screenshotUrl.startsWith('http') ? templates.screenshotUrl : `${origin}${templates.screenshotUrl}`)
-      : undefined
-    const inlineImageUrl = prospect.proof_screenshot_url || fallbackScreenshot
+    const inlineImageUrl = prospect.proof_screenshot_url || undefined
+    const greeting = `Hey ${prospect.decision_maker?.trim() || 'there'}`
     const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:640px;margin:0 auto;padding:24px">
-      <p style="margin:0 0 16px">Hey ${prospect.decision_maker || 'there'},</p>
+      <p style="margin:0 0 16px">${greeting},</p>
       <p style="margin:0 0 16px">We rebuilt your website for <strong>${prospect.business_name}</strong>.</p>
       ${inlineImageUrl ? `<p style="margin:0 0 20px"><img src="${inlineImageUrl}" alt="${prospect.business_name} website preview" style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
       <p style="margin:0 0 16px">Take a look here: <a href="${templates.proofUrl}" style="color:#2563eb">${templates.proofUrl}</a></p>
