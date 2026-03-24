@@ -7,7 +7,7 @@ export function getProspectDisplayName(prospect: Prospect) {
 
 export function getProofScreenshotUrl(prospect: Prospect) {
   const driveAssets = getProspectDriveAssets(prospect.businessName)
-  return driveAssets.gifUrl || driveAssets.screenshotUrl || prospect.proofScreenshotUrl || `/api/proof-screenshot/${prospect.id}`
+  return prospect.proofScreenshotUrl || driveAssets.gifUrl || driveAssets.screenshotUrl || `/api/proof-screenshot/${prospect.id}`
 }
 
 export function buildOutreachTemplates(prospect: Prospect) {

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const origin = new URL(request.url).origin
     const screenshotUrl = templates.screenshotUrl.startsWith('http') ? templates.screenshotUrl : `${origin}${templates.screenshotUrl}`
-    const heroAssetUrl = templates.gifUrl || screenshotUrl
+    const heroAssetUrl = prospect.proof_screenshot_url || templates.gifUrl || screenshotUrl
     const resend = new Resend(key)
     const result = await resend.emails.send({
       from: 'Paul @ CoGrow <paul@cogrow.ai>',
