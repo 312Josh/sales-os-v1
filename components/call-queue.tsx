@@ -264,9 +264,9 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
             <div className="text-xs font-semibold text-violet-900">Paul outreach kit</div>
             <div className="grid gap-3 md:grid-cols-[180px_1fr]">
               <div className="space-y-2">
-                {prospect.proofScreenshotUrl ? (
-                  <a href={prospect.proofScreenshotUrl} target="_blank" rel="noreferrer">
-                    <Image src={prospect.proofScreenshotUrl} alt={`${prospect.businessName} screenshot`} width={320} height={220} className="w-full rounded-lg border border-violet-200" />
+                {outreach.screenshotUrl ? (
+                  <a href={outreach.screenshotUrl} target="_blank" rel="noreferrer">
+                    <Image src={outreach.screenshotUrl} alt={prospect.businessName} width={320} height={220} className="w-full rounded-lg border border-violet-200" unoptimized />
                   </a>
                 ) : (
                   <div className="rounded-lg border border-dashed border-violet-200 bg-white p-3 text-xs text-slate-500">Screenshot pending proof build</div>
