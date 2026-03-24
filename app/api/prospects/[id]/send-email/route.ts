@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { buildOutreachTemplates } from '@/lib/outreach-copy'
+import { sendEmail } from '@/lib/resend'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const key = process.env.RESEND_API_KEY
-    if (!key) return NextResponse.json({ ok: false, error: 'Missing RESEND_API_KEY' }, { status: 500 })
-
     const supabase = getSupabaseAdmin()
     const { data: prospect, error } = await supabase.from('prospects').select('*').eq('id', id).single()
     if (error || !prospect) return NextResponse.json({ ok: false, error: 'Prospect not found' }, { status: 404 })
@@ -54,28 +51,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       siteAuditSummary: prospect.site_audit_summary,
     } as any)
 
-    const inlineImageUrl = prospect.proof_screenshot_url || undefined
+    const body = await request.json().catch(() => ({}))
+    const mediaMode = body.mediaMode === 'gif' || body.mediaMode === 'none' ? body.mediaMode : 'screenshot'
+    const proofBase = String(prospect.proof_url || '').replace(/\/$/, '')
+    const screenshotUrl = proofBase ? `${proofBase}/screenshot.png` : undefined
+    const gifUrl = proofBase ? `${proofBase}/demo.gif` : undefined
+    const inlineImageUrl = mediaMode === 'gif' ? gifUrl : mediaMode === 'none' ? undefined : screenshotUrl
     const greeting = `Hey ${prospect.decision_maker?.trim() || 'there'}`
+    const signatureHtml = `<table style="font-family:Arial,sans-serif;font-size:14px;color:#333;margin-top:20px;"><tr><td style="padding-right:15px;border-right:2px solid #dc2626;"><strong style="font-size:16px;color:#111;">Paul Janastas</strong><br/><span style="color:#dc2626;font-size:13px;">Co-Founder</span></td><td style="padding-left:15px;"><strong>CoGrow</strong> | cogrow.ai<br/>(508) 263-0137<br/>paul@cogrow.ai</td></tr></table>`
     const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:640px;margin:0 auto;padding:24px">
       <p style="margin:0 0 16px">${greeting},</p>
       <p style="margin:0 0 16px">We rebuilt your website for <strong>${prospect.business_name}</strong>.</p>
       ${inlineImageUrl ? `<p style="margin:0 0 20px"><img src="${inlineImageUrl}" alt="${prospect.business_name} website preview" style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
       <p style="margin:0 0 16px">Take a look here: <a href="${templates.proofUrl}" style="color:#2563eb">${templates.proofUrl}</a></p>
       <p style="margin:0 0 16px">If you like what you see, I'd love to spend 10 minutes walking you through it.</p>
-      <p style="margin:0">— Paul, CoGrow</p>
+      ${signatureHtml}
     </div>`
-    const resend = new Resend(key)
-    const result = await resend.emails.send({
-      from: 'Paul @ CoGrow <paul@cogrow.ai>',
-      to: [prospect.email],
-      replyTo: 'paul@cogrow.ai',
+    const result = await sendEmail({
+      to: prospect.email,
       subject: `${prospect.business_name}, we rebuilt your website`,
       text: templates.emailBody,
       html,
+      from: 'Paul @ CoGrow <paul@cogrow.ai>',
+      replyTo: 'paul@cogrow.ai',
     })
 
-    if (result.error) return NextResponse.json({ ok: false, error: result.error.message, statusCode: result.error.statusCode }, { status: 500 })
-    return NextResponse.json({ ok: true, id: result.data?.id || null })
+    return NextResponse.json({ ok: true, id: result.id || null, status: result.status || null })
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error?.message || 'Unknown error' }, { status: 500 })
   }

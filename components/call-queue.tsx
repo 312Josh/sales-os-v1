@@ -185,6 +185,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
   const noAnswerSms = buildSmsBody(prospect, "no_answer");
   const outreach = buildOutreachTemplates(prospect);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [mediaMode, setMediaMode] = useState<"screenshot" | "gif" | "none">("screenshot");
 
   return (
     <Card className="group hover:shadow-md hover:border-blue-200 transition-all duration-200">
@@ -302,11 +303,16 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
                 <div>
                   <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
                     <span>Email subject + body</span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select value={mediaMode} onChange={(e) => setMediaMode(e.target.value as "screenshot" | "gif" | "none")} className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-700">
+                        <option value="screenshot">Screenshot</option>
+                        <option value="gif">GIF</option>
+                        <option value="none">None</option>
+                      </select>
                       <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(`Subject: ${outreach.emailSubject}\n\n${outreach.emailBody}`)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
                       <Button size="sm" className="h-7 text-[11px] bg-violet-600 hover:bg-violet-500" disabled={sendingEmail || !prospect.email} title={!prospect.email ? 'Prospect has no email on file' : 'Send via Resend'} onClick={async () => {
                         setSendingEmail(true)
-                        const res = await fetch(`/api/prospects/${prospect.id}/send-email`, { method: 'POST' })
+                        const res = await fetch(`/api/prospects/${prospect.id}/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaMode }) })
                         const json = await res.json().catch(() => ({}))
                         if (!res.ok) alert(json.error || 'Email send failed')
                         else alert('Email sent')
