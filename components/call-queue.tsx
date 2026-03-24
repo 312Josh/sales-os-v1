@@ -65,6 +65,7 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [marketFilter, setMarketFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"ready" | "all">("ready");
 
   const reps = [...new Set(prospects.map((p) => p.assignedRep || "unknown"))].sort();
   const niches = [...new Set(prospects.map((p) => p.vertical || p.niche || "unknown"))].sort();
@@ -74,6 +75,8 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
   const filtered = prospects.filter((p) => {
     const v = p.vertical || p.niche || "unknown";
     const m = p.marketTag || p.market || "unknown";
+    const isOutboundReady = p.proofStatus === 'ready' && Boolean(p.proofUrl) && Boolean(p.proofScreenshotUrl);
+    if (viewMode === "ready" && !isOutboundReady) return false;
     if (repFilter !== "all" && p.assignedRep !== repFilter) return false;
     if (verticalFilter !== "all" && v !== verticalFilter) return false;
     if (marketFilter !== "all" && m !== marketFilter) return false;
@@ -87,6 +90,22 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
       <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 mb-5">
         <h2 className="text-lg font-bold text-sales-900 sm:mr-auto">Call Queue</h2>
         <div className="flex flex-wrap gap-2">
+          <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <button
+              type="button"
+              onClick={() => setViewMode("ready")}
+              className={`px-3 py-2 text-sm min-h-[44px] ${viewMode === "ready" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+            >
+              Ready Now
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("all")}
+              className={`px-3 py-2 text-sm min-h-[44px] border-l border-slate-200 ${viewMode === "all" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+            >
+              All
+            </button>
+          </div>
           <select
             value={repFilter}
             onChange={(e) => setRepFilter(e.target.value)}
