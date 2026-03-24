@@ -60,12 +60,16 @@ export type Prospect = {
   marketTag?: string
   priorityBucket?: 'hot' | 'warm' | 'cold' | ''
   decisionMakerTitle?: string
-  contactStatus?: 'new' | 'contacted' | 'replied' | 'booked' | 'not_interested'
+  contactStatus?: 'new' | 'contacted' | 'email_sent' | 'email_opened' | 'email_clicked' | 'replied' | 'booked' | 'not_interested'
   lastContactedAt?: string
   proofViewedAt?: string
   proofViewCount?: number
+  emailSentAt?: string
   emailOpenedAt?: string
   emailClickedAt?: string
+  emailRepliedAt?: string
+  emailOpenCount?: number
+  emailClickCount?: number
   trackingToken?: string
   activeSequenceId?: string
   activeSequenceStatus?: string

@@ -60,11 +60,28 @@ async function copyText(text: string) {
   await navigator.clipboard.writeText(text)
 }
 
+function formatDateTime(value?: string): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleString()
+}
+
+function getOutreachStage(prospect: Prospect): { label: string; className: string } {
+  if (prospect.contactStatus === 'replied' || prospect.emailRepliedAt) return { label: 'replied', className: 'bg-red-50 text-red-700 border-red-200' }
+  if (prospect.pipelineStage === 'meeting_booked') return { label: 'call_scheduled', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+  if (prospect.emailClickedAt) return { label: 'email_clicked', className: 'bg-amber-50 text-amber-700 border-amber-200' }
+  if (prospect.emailOpenedAt) return { label: 'email_opened', className: 'bg-blue-50 text-blue-700 border-blue-200' }
+  if (prospect.contactStatus === 'email_sent' || prospect.emailSentAt || prospect.lastContactedAt) return { label: 'email_sent', className: 'bg-violet-50 text-violet-700 border-violet-200' }
+  return { label: 'new', className: 'bg-slate-50 text-slate-600 border-slate-200' }
+}
+
 export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects: Prospect[]; meetings?: MeetingRecord[]; calls?: CallLog[] }) {
   const [repFilter, setRepFilter] = useState("all");
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [marketFilter, setMarketFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
+  const [engagementStageFilter, setEngagementStageFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"ready" | "all">("ready");
 
   const reps = [...new Set(prospects.map((p) => p.assignedRep || "unknown"))].sort();
@@ -81,6 +98,7 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
     if (verticalFilter !== "all" && v !== verticalFilter) return false;
     if (marketFilter !== "all" && m !== marketFilter) return false;
     if (stageFilter !== "all" && p.pipelineStage !== stageFilter) return false;
+    if (engagementStageFilter !== "all" && getOutreachStage(p).label !== engagementStageFilter) return false;
     return true;
   });
 
@@ -146,6 +164,19 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
               <option key={s} value={s}>{stageLabel(s)}</option>
             ))}
           </select>
+          <select
+            value={engagementStageFilter}
+            onChange={(e) => setEngagementStageFilter(e.target.value)}
+            className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-h-[44px]"
+          >
+            <option value="all">All Outreach Stages</option>
+            <option value="new">New</option>
+            <option value="email_sent">Email Sent</option>
+            <option value="email_opened">Email Opened</option>
+            <option value="email_clicked">Clicked</option>
+            <option value="replied">Replied</option>
+            <option value="call_scheduled">Call Scheduled</option>
+          </select>
         </div>
         <span className="text-sm text-slate-400">{filtered.length} prospects</span>
       </div>
@@ -186,6 +217,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
   const outreach = buildOutreachTemplates(prospect);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [mediaMode, setMediaMode] = useState<"screenshot" | "gif" | "none">("screenshot");
+  const outreachStage = getOutreachStage(prospect);
 
   return (
     <Card className="group hover:shadow-md hover:border-blue-200 transition-all duration-200">
@@ -239,6 +271,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
           {bookingState === 'awaiting_booking' && <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">📅 Awaiting</Badge>}
           {bookingState === 'booked' && <Badge className="text-[10px] bg-emerald-500 text-white border-0">📅 Booked</Badge>}
           {bookingState === 'completed' && <Badge className="text-[10px] bg-green-600 text-white border-0">✅ Complete</Badge>}
+          <Badge variant="outline" className={`text-[10px] ${outreachStage.className}`}>{outreachStage.label.replace(/_/g, " ")}</Badge>
         </div>
 
         {/* Contact */}
@@ -301,6 +334,12 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
                   <div className="min-w-0 overflow-hidden rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap break-words">{outreach.iMessageText}</div>
                 </div>
                 <div>
+                  <div className="rounded-md bg-white border border-slate-200 p-2 text-[11px] text-slate-600 mb-2 space-y-1">
+                    {formatDateTime(prospect.emailSentAt || prospect.lastContactedAt) && <div><strong>Sent:</strong> {formatDateTime(prospect.emailSentAt || prospect.lastContactedAt)}</div>}
+                    {formatDateTime(prospect.emailOpenedAt) && <div><strong>Opened:</strong> {formatDateTime(prospect.emailOpenedAt)}{prospect.emailOpenCount ? ` (${prospect.emailOpenCount}x)` : ''}</div>}
+                    {formatDateTime(prospect.emailClickedAt) && <div><strong>Clicked:</strong> {formatDateTime(prospect.emailClickedAt)}{prospect.emailClickCount ? ` (${prospect.emailClickCount}x)` : ''}</div>}
+                    {formatDateTime(prospect.emailRepliedAt) && <div><strong>Replied:</strong> {formatDateTime(prospect.emailRepliedAt)}</div>}
+                  </div>
                   <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
                     <span>Email subject + body</span>
                     <div className="flex flex-wrap items-center gap-2">

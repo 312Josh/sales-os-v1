@@ -74,6 +74,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       html,
       from: 'Paul @ CoGrow <paul@cogrow.ai>',
       replyTo: 'paul@cogrow.ai',
+      headers: { 'X-Prospect-Tracking-Token': prospect.tracking_token || '' },
+    })
+
+    await supabase.from('prospects').update({
+      contact_status: 'email_sent',
+      last_contacted_at: new Date().toISOString(),
+      email_sent_at: new Date().toISOString(),
+    }).eq('id', prospect.id)
+
+    await supabase.from('activity_log').insert({
+      id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      prospect_id: prospect.id,
+      event_type: 'email_sent',
+      summary: '✉️ Email sent via Resend',
     })
 
     return NextResponse.json({ ok: true, id: result.id || null, status: result.status || null })

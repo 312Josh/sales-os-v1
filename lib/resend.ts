@@ -11,14 +11,33 @@ function getResendClient(): Resend {
   return _resend
 }
 
-export async function sendEmail({ to, subject, text }: { to: string; subject: string; text: string }) {
+export async function sendEmail({
+  to,
+  subject,
+  text,
+  html,
+  from = 'Sales OS <onboarding@resend.dev>',
+  replyTo,
+  headers,
+}: {
+  to: string
+  subject: string
+  text: string
+  html?: string
+  from?: string
+  replyTo?: string
+  headers?: Record<string, string>
+}) {
   const resend = getResendClient()
 
   const { data, error } = await resend.emails.send({
-    from: 'Sales OS <onboarding@resend.dev>',
+    from,
     to,
     subject,
     text,
+    html,
+    replyTo,
+    headers,
   })
 
   if (error) {
