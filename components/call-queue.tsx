@@ -259,7 +259,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
         )}
 
         {OUTREACH_KIT_PROSPECT_IDS.has(prospect.id) && (
-          <div className="mb-4 min-w-0 overflow-hidden rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
+          <div className="mb-4 min-w-0 rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
             <div className="text-xs font-semibold text-violet-900">Paul outreach kit</div>
             <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
               <div className="min-w-0 space-y-2 overflow-hidden">
@@ -274,16 +274,16 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
               </div>
               <div className="min-w-0 space-y-3 overflow-hidden">
                 <div>
-                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
                     <span>iMessage text</span>
                     <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(outreach.iMessageText)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
                   </div>
                   <div className="min-w-0 overflow-hidden rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap break-words">{outreach.iMessageText}</div>
                 </div>
                 <div>
-                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
                     <span>Email subject + body</span>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(`Subject: ${outreach.emailSubject}\n\n${outreach.emailBody}`)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
                       <Button size="sm" className="h-7 text-[11px] bg-violet-600 hover:bg-violet-500" disabled={sendingEmail || !prospect.email} title={!prospect.email ? 'Prospect has no email on file' : 'Send via Resend'} onClick={async () => {
                         setSendingEmail(true)
@@ -298,7 +298,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
                   <div className="min-w-0 overflow-hidden rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap break-words"><strong>Subject:</strong> {outreach.emailSubject}{'\n\n'}{outreach.emailBody}</div>
                 </div>
                 <div>
-                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
                     <span>SMS fallback</span>
                     <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(outreach.smsFallbackText)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
                   </div>
