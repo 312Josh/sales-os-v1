@@ -259,26 +259,26 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
         )}
 
         {OUTREACH_KIT_PROSPECT_IDS.has(prospect.id) && (
-          <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
+          <div className="mb-4 min-w-0 overflow-hidden rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
             <div className="text-xs font-semibold text-violet-900">Paul outreach kit</div>
-            <div className="grid gap-3 md:grid-cols-[180px_1fr]">
-              <div className="space-y-2">
+            <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
+              <div className="min-w-0 space-y-2 overflow-hidden">
                 {prospect.proofScreenshotUrl ? (
-                  <a href={prospect.proofScreenshotUrl} target="_blank" rel="noreferrer">
-                    <img src={prospect.proofScreenshotUrl} alt={prospect.businessName} className="w-full rounded-lg border border-violet-200" />
+                  <a href={prospect.proofScreenshotUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-violet-200 bg-white">
+                    <img src={prospect.proofScreenshotUrl} alt={prospect.businessName} className="block h-auto max-w-full w-full object-contain" />
                   </a>
                 ) : (
                   <div className="rounded-lg border border-dashed border-violet-200 bg-white p-3 text-xs text-slate-500">Screenshot pending proof build</div>
                 )}
-                <a href={outreach.proofUrl} target="_blank" rel="noreferrer" className="text-xs text-violet-700 hover:underline break-all">{outreach.proofUrl}</a>
+                <a href={outreach.proofUrl} target="_blank" rel="noreferrer" className="block max-w-full overflow-hidden text-ellipsis break-all text-xs text-violet-700 hover:underline">{outreach.proofUrl}</a>
               </div>
-              <div className="space-y-3">
+              <div className="min-w-0 space-y-3 overflow-hidden">
                 <div>
                   <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
                     <span>iMessage text</span>
                     <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(outreach.iMessageText)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
                   </div>
-                  <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap">{outreach.iMessageText}</div>
+                  <div className="min-w-0 overflow-hidden rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap break-words">{outreach.iMessageText}</div>
                 </div>
                 <div>
                   <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
@@ -295,14 +295,14 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
                       }}><Mail className="w-3 h-3 mr-1" />{!prospect.email ? 'No Email' : sendingEmail ? 'Sending...' : 'Send Email'}</Button>
                     </div>
                   </div>
-                  <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap"><strong>Subject:</strong> {outreach.emailSubject}{'\n\n'}{outreach.emailBody}</div>
+                  <div className="min-w-0 overflow-hidden rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap break-words"><strong>Subject:</strong> {outreach.emailSubject}{'\n\n'}{outreach.emailBody}</div>
                 </div>
                 <div>
                   <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-700">
                     <span>SMS fallback</span>
                     <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyText(outreach.smsFallbackText)}><Copy className="w-3 h-3 mr-1" />Copy</Button>
                   </div>
-                  <div className="rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap">{outreach.smsFallbackText}</div>
+                  <div className="min-w-0 overflow-hidden rounded-md bg-white border border-slate-200 p-2 text-xs text-slate-700 whitespace-pre-wrap break-words">{outreach.smsFallbackText}</div>
                 </div>
               </div>
             </div>
