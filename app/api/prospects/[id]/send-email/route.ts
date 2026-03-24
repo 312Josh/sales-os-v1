@@ -55,22 +55,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } as any)
 
     const origin = new URL(request.url).origin
-    const screenshotUrl = templates.screenshotUrl.startsWith('http') ? templates.screenshotUrl : `${origin}${templates.screenshotUrl}`
-    const heroAssetUrl = prospect.proof_screenshot_url || templates.gifUrl || screenshotUrl
+    const fallbackScreenshot = templates.screenshotUrl
+      ? (templates.screenshotUrl.startsWith('http') ? templates.screenshotUrl : `${origin}${templates.screenshotUrl}`)
+      : undefined
+    const inlineImageUrl = prospect.proof_screenshot_url || fallbackScreenshot
+    const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:640px;margin:0 auto;padding:24px">
+      <p style="margin:0 0 16px">Hey ${prospect.decision_maker || 'there'},</p>
+      <p style="margin:0 0 16px">We rebuilt your website for <strong>${prospect.business_name}</strong>.</p>
+      ${inlineImageUrl ? `<p style="margin:0 0 20px"><img src="${inlineImageUrl}" alt="${prospect.business_name} website preview" style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
+      <p style="margin:0 0 16px">Take a look here: <a href="${templates.proofUrl}" style="color:#2563eb">${templates.proofUrl}</a></p>
+      <p style="margin:0 0 16px">If you like what you see, I'd love to spend 10 minutes walking you through it.</p>
+      <p style="margin:0">— Paul, CoGrow</p>
+    </div>`
     const resend = new Resend(key)
     const result = await resend.emails.send({
       from: 'Paul @ CoGrow <paul@cogrow.ai>',
       to: [prospect.email],
       replyTo: 'paul@cogrow.ai',
-      subject: templates.emailSubject,
+      subject: `${prospect.business_name}, we rebuilt your website`,
       text: templates.emailBody,
-      html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-        <p>Hey ${prospect.decision_maker || 'there'},</p>
-        <p>I put together a new website for <strong>${prospect.business_name}</strong>. Take a look: <a href="${templates.proofUrl}">${templates.proofUrl}</a>.</p>
-        ${heroAssetUrl ? `<p><img src="${heroAssetUrl}" alt="${prospect.business_name} preview" style="display:block;max-width:100%;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
-        <p>If you like what you see, I'd love to spend 10 minutes walking you through it.</p>
-        <p>— Paul, CoGrow</p>
-      </div>`,
+      html,
     })
 
     if (result.error) return NextResponse.json({ ok: false, error: result.error.message, statusCode: result.error.statusCode }, { status: 500 })
