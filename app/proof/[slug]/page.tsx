@@ -1,5 +1,6 @@
 import { getSalesOsData } from '@/lib/data'
 import { notFound } from 'next/navigation'
+import { buildOutreachTemplates } from '@/lib/outreach-copy'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,8 @@ export default async function ProofPage({ params }: { params: Promise<{ slug: st
   const prospect = data.prospects.find((p) => slugify(p.businessName) === slug || p.id === slug)
 
   if (!prospect) return notFound()
+
+  const outreach = buildOutreachTemplates(prospect)
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
@@ -51,9 +54,36 @@ export default async function ProofPage({ params }: { params: Promise<{ slug: st
           </div>
         </div>
 
-        <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-500">
-          <p className="font-medium">Proof assets route is now live.</p>
-          <p className="text-sm mt-2">Screenshot/video blocks can render here as those URLs are added to the prospect record.</p>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+            <div className="border-b border-slate-200 px-4 py-3">
+              <p className="text-sm font-semibold text-sales-900">Website preview</p>
+              <p className="text-xs text-slate-500 mt-1">Live proof screenshot used in outreach</p>
+            </div>
+            <div className="bg-slate-50 p-4">
+              <img
+                src={outreach.screenshotUrl}
+                alt={`${prospect.businessName} website proof preview`}
+                className="w-full rounded-xl border border-slate-200 bg-white object-contain"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-sales-900">Preview link</p>
+              <a href={outreach.proofUrl} className="mt-2 block break-all text-sm text-blue-600 hover:underline">
+                {outreach.proofUrl}
+              </a>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-sales-900">Outreach email</p>
+              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">Subject</p>
+              <p className="mt-1 text-sm text-slate-800">{outreach.emailSubject}</p>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{outreach.emailBody}</p>
+            </div>
+          </div>
         </div>
       </div>
     </main>

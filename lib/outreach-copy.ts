@@ -12,10 +12,13 @@ export function getProspectGreeting(prospect: Prospect) {
 
 export function getProofScreenshotUrl(prospect: Prospect) {
   const driveAssets = getProspectDriveAssets(prospect.businessName)
-  if (prospect.proofScreenshotUrl && !prospect.proofScreenshotUrl.includes('drive.google.com')) {
+  if (prospect.proofScreenshotUrl && prospect.proofScreenshotUrl.trim().length > 0) {
     return prospect.proofScreenshotUrl
   }
-  return `/proof-screenshots/${prospect.id}.png`
+  if (driveAssets.screenshotUrl) {
+    return driveAssets.screenshotUrl
+  }
+  return `/api/proof-screenshot/${prospect.id}`
 }
 
 export function buildOutreachTemplates(prospect: Prospect) {
