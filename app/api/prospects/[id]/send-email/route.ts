@@ -12,6 +12,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error || !prospect) return NextResponse.json({ ok: false, error: 'Prospect not found' }, { status: 404 })
     if (!prospect.email) return NextResponse.json({ ok: false, error: 'Prospect has no email' }, { status: 400 })
 
+    // HARD GUARD: Never send the first email twice. Double-emailing a cold prospect kills the deal.
+    if (prospect.email_sent_at || (prospect.contact_status && prospect.contact_status !== 'new')) {
+      return NextResponse.json(
+        { ok: false, error: 'Email already sent to this prospect', contact_status: prospect.contact_status, email_sent_at: prospect.email_sent_at },
+        { status: 409 }
+      )
+    }
+
     const templates = buildOutreachTemplates({
       id: prospect.id,
       businessName: prospect.business_name,

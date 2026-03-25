@@ -140,6 +140,20 @@ export async function POST(request: NextRequest) {
     const prospect = prospectMap.get(seq.prospect_id)
     if (!prospect) continue
 
+    // HARD GUARD: Never send the first email twice. If step 0 (first email) and prospect
+    // already has email_sent_at or contact_status beyond 'new', skip entirely.
+    if (step.step_number === 0 && (prospect.email_sent_at || (prospect.contact_status && prospect.contact_status !== 'new'))) {
+      await supabase.from('sequence_steps').update({ status: 'skipped' }).eq('id', step.id)
+      await supabase.from('activity_log').insert({
+        id: createId('activity'),
+        prospect_id: seq.prospect_id,
+        event_type: 'sequence_step_skipped',
+        summary: `⛔ Step 1 skipped — prospect already emailed (${prospect.contact_status}, sent: ${prospect.email_sent_at || 'n/a'})`,
+      })
+      processed++
+      continue
+    }
+
     const shouldStop =
       prospect.contact_status === 'replied' ||
       prospect.proof_viewed_at != null ||
