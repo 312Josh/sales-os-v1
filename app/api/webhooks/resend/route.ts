@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Webhook } from "svix"
 import { createClient } from "@supabase/supabase-js"
 
 function getSupabase() {
@@ -8,77 +9,80 @@ function getSupabase() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
-function createId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+function getWebhookSecret() {
+  const secret = process.env.RESEND_WEBHOOK_SECRET
+  if (!secret) throw new Error('RESEND_WEBHOOK_SECRET is missing')
+  return secret
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const event = body?.type || body?.data?.type || body?.event || ''
-    const emailId = body?.data?.email_id || body?.data?.emailId || body?.data?.object?.id || body?.email_id || null
-    const to = body?.data?.to?.[0] || body?.data?.to || body?.to || ''
-    const headers = body?.data?.headers || {}
-    const trackingToken = headers['X-Prospect-Tracking-Token'] || headers['x-prospect-tracking-token'] || body?.data?.tags?.tracking_token || null
+    const payload = await request.text()
+    const headers = {
+      'svix-id': request.headers.get('svix-id') || '',
+      'svix-timestamp': request.headers.get('svix-timestamp') || '',
+      'svix-signature': request.headers.get('svix-signature') || '',
+    }
+
+    const wh = new Webhook(getWebhookSecret())
+    const event = wh.verify(payload, headers) as any
+
+    const eventType = String(event?.type || '')
+    const data = event?.data || {}
+    const emailTo = data?.to?.[0] || data?.to || ''
+    const tags = Array.isArray(data?.tags) ? data.tags : []
+    const prospectTag = tags.find((tag: any) => tag?.name === 'prospect_slug')?.value || null
 
     const supabase = getSupabase()
     let prospect = null
-    if (trackingToken) {
-      const result = await supabase.from('prospects').select('id,business_name,email_open_count,email_click_count').eq('tracking_token', trackingToken).maybeSingle()
+    if (prospectTag) {
+      const result = await supabase.from('prospects').select('id,email,email_open_count,email_click_count').eq('id', prospectTag).maybeSingle()
       prospect = result.data
     }
-    if (!prospect && to) {
-      const result = await supabase.from('prospects').select('id,business_name,email_open_count,email_click_count').eq('email', to).maybeSingle()
+    if (!prospect && emailTo) {
+      const result = await supabase.from('prospects').select('id,email,email_open_count,email_click_count').eq('email', emailTo).maybeSingle()
       prospect = result.data
     }
 
+    const now = new Date().toISOString()
     if (prospect) {
-      const now = new Date().toISOString()
       const patch: Record<string, any> = {}
-      let activitySummary = `Email event: ${event}`
-      if (event.includes('open')) {
+      if (eventType === 'email.opened') {
         patch.email_opened_at = now
         patch.email_open_count = (prospect.email_open_count || 0) + 1
         patch.contact_status = 'email_opened'
-        activitySummary = '📬 Email opened'
-      } else if (event.includes('click')) {
+      } else if (eventType === 'email.clicked') {
         patch.email_clicked_at = now
         patch.email_click_count = (prospect.email_click_count || 0) + 1
         patch.contact_status = 'email_clicked'
-        activitySummary = '🔗 Clicked email link'
-      } else if (event.includes('reply')) {
-        patch.email_replied_at = now
-        patch.contact_status = 'replied'
-        activitySummary = '💬 Replied to email'
-      } else if (event.includes('sent') || event.includes('delivered')) {
+      } else if (eventType === 'email.delivered') {
         patch.email_sent_at = now
         patch.contact_status = 'email_sent'
-        patch.last_contacted_at = now
-        activitySummary = '✉️ Email sent'
+      } else if (eventType === 'email.bounced') {
+        patch.email_bounced_at = now
+        patch.contact_status = 'email_bounced'
       }
 
-      if (Object.keys(patch).length) {
-        await supabase.from('prospects').update(patch).eq('id', prospect.id)
-      }
+      if (Object.keys(patch).length) await supabase.from('prospects').update(patch).eq('id', prospect.id)
 
-      await supabase.from('engagement_events').insert({
-        id: createId('eng'),
+      await supabase.from('email_events').insert({
         prospect_id: prospect.id,
-        event_type: event || 'resend_event',
-        metadata: JSON.stringify({ emailId, to }),
+        email_to: emailTo || prospect.email || 'unknown',
+        event_type: eventType.replace('email.', ''),
+        metadata: event,
       })
-
-      await supabase.from('activity_log').insert({
-        id: createId('activity'),
-        prospect_id: prospect.id,
-        event_type: event || 'resend_event',
-        summary: activitySummary,
+    } else {
+      await supabase.from('email_events').insert({
+        prospect_id: null,
+        email_to: emailTo || 'unknown',
+        event_type: eventType.replace('email.', ''),
+        metadata: event,
       })
     }
 
     return NextResponse.json({ ok: true })
   } catch (error: any) {
     console.error('Resend webhook error:', error)
-    return NextResponse.json({ ok: false, error: error?.message || 'Webhook failed' }, { status: 500 })
+    return NextResponse.json({ ok: false, error: error?.message || 'Webhook failed' }, { status: 400 })
   }
 }

@@ -19,6 +19,7 @@ export async function sendEmail({
   from = 'Sales OS <onboarding@resend.dev>',
   replyTo,
   headers,
+  tags,
 }: {
   to: string
   subject: string
@@ -27,6 +28,7 @@ export async function sendEmail({
   from?: string
   replyTo?: string
   headers?: Record<string, string>
+  tags?: { name: string; value: string }[]
 }) {
   const resend = getResendClient()
 
@@ -38,6 +40,7 @@ export async function sendEmail({
     html,
     replyTo,
     headers,
+    tags,
   })
 
   if (error) {

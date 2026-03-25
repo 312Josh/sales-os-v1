@@ -69,6 +69,7 @@ function formatDateTime(value?: string): string | null {
 
 function getOutreachStage(prospect: Prospect): { label: string; className: string } {
   if (prospect.contactStatus === 'replied' || prospect.emailRepliedAt) return { label: 'replied', className: 'bg-red-50 text-red-700 border-red-200' }
+  if (prospect.contactStatus === 'email_bounced' || prospect.emailBouncedAt) return { label: 'bounced', className: 'bg-rose-50 text-rose-700 border-rose-200' }
   if (prospect.pipelineStage === 'meeting_booked') return { label: 'call_scheduled', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
   if (prospect.emailClickedAt) return { label: 'email_clicked', className: 'bg-amber-50 text-amber-700 border-amber-200' }
   if (prospect.emailOpenedAt) return { label: 'email_opened', className: 'bg-blue-50 text-blue-700 border-blue-200' }
@@ -175,6 +176,7 @@ export function CallQueue({ prospects, meetings = [], calls = [] }: { prospects:
             <option value="email_opened">Email Opened</option>
             <option value="email_clicked">Clicked</option>
             <option value="replied">Replied</option>
+            <option value="bounced">Bounced</option>
             <option value="call_scheduled">Call Scheduled</option>
           </select>
         </div>
@@ -240,6 +242,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
         <div className="flex flex-wrap gap-1.5 mb-3">
           <Badge variant="outline" className={`text-[10px] ${nicheClass}`}>{nicheLabel(prospect.niche || prospect.vertical || "")}</Badge>
           <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-600 border-slate-200">{prospect.marketTag || prospect.market}</Badge>
+          {((prospect.emailOpenCount || 0) >= 3 || (prospect.emailClickCount || 0) >= 1) && <Badge className="text-[10px] bg-orange-500 text-white border-0">🔥 Hot Lead</Badge>}
           {(prospect.priorityBucket === 'hot' || prospect.priorityScore > 70) && <Badge className="text-[10px] bg-red-500 text-white border-0">Hot</Badge>}
           {prospect.priorityBucket === 'warm' && prospect.priorityScore <= 70 && <Badge className="text-[10px] bg-amber-500 text-white border-0">Warm</Badge>}
           {!prospect.contactFormPresent && !prospect.contactFormUrl && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">No Form</Badge>}
@@ -339,6 +342,7 @@ function ProspectCard({ prospect, meeting, calls = [] }: { prospect: Prospect; m
                     {formatDateTime(prospect.emailOpenedAt) && <div><strong>Opened:</strong> {formatDateTime(prospect.emailOpenedAt)}{prospect.emailOpenCount ? ` (${prospect.emailOpenCount}x)` : ''}</div>}
                     {formatDateTime(prospect.emailClickedAt) && <div><strong>Clicked:</strong> {formatDateTime(prospect.emailClickedAt)}{prospect.emailClickCount ? ` (${prospect.emailClickCount}x)` : ''}</div>}
                     {formatDateTime(prospect.emailRepliedAt) && <div><strong>Replied:</strong> {formatDateTime(prospect.emailRepliedAt)}</div>}
+                    {formatDateTime(prospect.emailBouncedAt) && <div><strong>Bounced:</strong> {formatDateTime(prospect.emailBouncedAt)}</div>}
                   </div>
                   <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
                     <span>Email subject + body</span>

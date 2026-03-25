@@ -59,11 +59,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const inlineImageUrl = mediaMode === 'gif' ? gifUrl : mediaMode === 'none' ? undefined : screenshotUrl
     const greeting = `Hey ${prospect.decision_maker?.trim() || 'there'}`
     const signatureHtml = `<table style="font-family:Arial,sans-serif;font-size:14px;color:#333;margin-top:20px;"><tr><td style="padding-right:15px;border-right:2px solid #dc2626;"><strong style="font-size:16px;color:#111;">Paul Janastas</strong><br/><span style="color:#dc2626;font-size:13px;">Co-Founder</span></td><td style="padding-left:15px;"><strong>CoGrow</strong> | cogrow.ai<br/>(508) 263-0137<br/>paul@cogrow.ai</td></tr></table>`
+    const trackingUrl = `https://sales-os-v1.vercel.app/api/track/${prospect.id}?url=${encodeURIComponent(templates.proofUrl)}`
     const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:640px;margin:0 auto;padding:24px">
       <p style="margin:0 0 16px">${greeting},</p>
       <p style="margin:0 0 16px">We rebuilt your website for <strong>${prospect.business_name}</strong>.</p>
       ${inlineImageUrl ? `<p style="margin:0 0 20px"><img src="${inlineImageUrl}" alt="${prospect.business_name} website preview" style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e2e8f0;border-radius:12px" /></p>` : ''}
-      <p style="margin:0 0 16px">Take a look here: <a href="${templates.proofUrl}" style="color:#2563eb">${templates.proofUrl}</a></p>
+      <p style="margin:0 0 16px">Take a look here: <a href="${trackingUrl}" style="color:#2563eb">${templates.proofUrl}</a></p>
       <p style="margin:0 0 16px">If you like what you see, I'd love to spend 10 minutes walking you through it.</p>
       ${signatureHtml}
     </div>`
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       from: 'Paul @ CoGrow <paul@cogrow.ai>',
       replyTo: 'paul@cogrow.ai',
       headers: { 'X-Prospect-Tracking-Token': prospect.tracking_token || '' },
+      tags: [{ name: 'prospect_slug', value: prospect.id }],
     })
 
     await supabase.from('prospects').update({
