@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { buildOutreachTemplates } from '@/lib/outreach-copy'
 import { sendEmail } from '@/lib/resend'
+import { buildTrackedUrl } from '@/lib/email-tracking'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const inlineImageUrl = mediaMode === 'gif' ? gifUrl : mediaMode === 'none' ? undefined : screenshotUrl
     const greeting = `Hey ${prospect.decision_maker?.trim() || 'there'}`
     const signatureHtml = `<table style="font-family:Arial,sans-serif;font-size:14px;color:#333;margin-top:20px;"><tr><td style="padding-right:15px;border-right:2px solid #dc2626;"><strong style="font-size:16px;color:#111;">Paul Janastas</strong><br/><span style="color:#dc2626;font-size:13px;">Co-Founder</span></td><td style="padding-left:15px;"><strong>CoGrow</strong> | cogrow.ai<br/>(508) 263-0137<br/>paul@cogrow.ai</td></tr></table>`
-    const trackingUrl = `https://sales-os-v1.vercel.app/api/track/${prospect.id}?url=${encodeURIComponent(templates.proofUrl)}`
+    const trackingUrl = buildTrackedUrl(prospect.id, templates.proofUrl)
     const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:640px;margin:0 auto;padding:24px">
       <p style="margin:0 0 16px">${greeting},</p>
       <p style="margin:0 0 16px">We rebuilt your website for <strong>${prospect.business_name}</strong>.</p>
@@ -79,10 +80,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       tags: [{ name: 'prospect_slug', value: prospect.id }],
     })
 
+    const sentAt = new Date().toISOString()
     await supabase.from('prospects').update({
       contact_status: 'email_sent',
-      last_contacted_at: new Date().toISOString(),
-      email_sent_at: new Date().toISOString(),
+      last_contacted_at: sentAt,
+      email_sent_at: sentAt,
     }).eq('id', prospect.id)
 
     await supabase.from('activity_log').insert({

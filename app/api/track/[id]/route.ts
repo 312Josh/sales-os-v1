@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { sanitizeTrackingDestination } from '@/lib/email-tracking'
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Missing Supabase credentials')
-  return createClient(url, key, { auth: { persistSession: false } })
+function createActivityId() {
+  return `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const destination = request.nextUrl.searchParams.get('url')
-  if (!destination) return NextResponse.redirect('https://sales-os-v1.vercel.app')
+  const destination = sanitizeTrackingDestination(request.nextUrl.searchParams.get('url'))
+
+  if (!destination) {
+    return NextResponse.redirect('https://sales-os-v1.vercel.app', { status: 302 })
+  }
 
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabaseAdmin()
     const forwarded = request.headers.get('x-forwarded-for') || ''
     const ip = forwarded.split(',')[0]?.trim() || null
     const userAgent = request.headers.get('user-agent') || null
@@ -33,8 +34,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (prospect) {
+      const clickedAt = new Date().toISOString()
       await supabase.from('prospects').update({
-        email_clicked_at: new Date().toISOString(),
+        email_clicked_at: clickedAt,
         email_click_count: (prospect.email_click_count || 0) + 1,
         contact_status: 'email_clicked',
       }).eq('id', id)
@@ -43,7 +45,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         prospect_id: id,
         email_to: prospect.email || 'unknown',
         event_type: 'clicked',
-        metadata: { destination_url: destination, source: 'redirect' },
+        metadata: { destination_url: destination, source: 'redirect', user_agent: userAgent, ip_address: ip },
+        created_at: clickedAt,
+      })
+
+      await supabase.from('activity_log').insert({
+        id: createActivityId(),
+        prospect_id: id,
+        event_type: 'email_clicked',
+        summary: '🔗 Tracked link clicked',
       })
     }
   } catch (error) {

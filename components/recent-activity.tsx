@@ -11,6 +11,13 @@ function relativeTime(dateString: string) {
   return `${days}d ago`
 }
 
+function labelEvent(eventType: string) {
+  if (eventType.startsWith('email_')) return 'Email activity'
+  if (eventType.includes('sequence')) return 'Sequence'
+  if (eventType.includes('proof')) return 'Proof'
+  return eventType
+}
+
 export function RecentActivity({
   activity,
   prospects,
@@ -19,19 +26,20 @@ export function RecentActivity({
   prospects: Prospect[]
 }) {
   const prospectById = new Map(prospects.map((p) => [p.id, p]))
+  const sorted = [...activity].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-sales-900">Recent Activity</h2>
-        <span className="text-xs text-slate-400">Last 50 events</span>
+        <span className="text-xs text-slate-400">Live webhook + outbound feed</span>
       </div>
 
       <div className="space-y-3">
-        {activity.length === 0 ? (
+        {sorted.length === 0 ? (
           <div className="text-sm text-slate-500">No activity yet.</div>
         ) : (
-          activity.slice(0, 20).map((item) => {
+          sorted.slice(0, 20).map((item) => {
             const prospect = prospectById.get(item.prospectId)
             return (
               <div key={item.id} className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
@@ -41,7 +49,7 @@ export function RecentActivity({
                     <div className="text-xs text-slate-500 mt-1">
                       {prospect?.businessName || item.prospectId}
                       {prospect?.assignedRep ? ` • ${prospect.assignedRep}` : ''}
-                      {item.eventType ? ` • ${item.eventType}` : ''}
+                      {item.eventType ? ` • ${labelEvent(item.eventType)}` : ''}
                     </div>
                   </div>
                   <div className="text-[11px] text-slate-400 shrink-0" title={new Date(item.createdAt).toLocaleString()}>

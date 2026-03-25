@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 import { getSequenceSteps, getProofUrl } from '@/lib/sequence-templates'
+import { addTrackingToHtml, buildTrackedUrl } from '@/lib/email-tracking'
+import { sendEmail } from '@/lib/resend'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -23,36 +24,24 @@ function escapeHtml(input: string) {
     .replace(/'/g, '&#39;')
 }
 
-function buildTrackedUrls(token: string | undefined, proofUrl: string) {
-  const safeToken = token || ''
-  const encodedTarget = encodeURIComponent(proofUrl)
-  return {
-    openPixel: `https://sales-os-v1.vercel.app/api/track/email-open?ref=${safeToken}`,
-    trackedProofUrl: `https://sales-os-v1.vercel.app/api/track/email-click?ref=${safeToken}&to=${encodedTarget}`,
-  }
+function buildEmailHtml(text: string, trackedProofUrl: string) {
+  const escaped = escapeHtml(text)
+  const htmlWithBreaks = escaped.replace(/\n/g, '<br />')
+  const linked = htmlWithBreaks.replace(/https?:\/\/\S+/g, trackedProofUrl)
+  return addTrackingToHtml(`<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">${linked}</div>`, '')
 }
 
-function buildEmailHtml(text: string, trackedProofUrl: string, openPixel: string) {
-  const linked = text.replace(/https?:\/\/\S+/g, trackedProofUrl)
-  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;white-space:pre-line">${escapeHtml(linked)}</div><img src="${openPixel}" width="1" height="1" style="display:block" alt="" />`
-}
-
-async function sendEmail(to: string, subject: string, text: string, html: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    console.error('RESEND_API_KEY not set')
-    return false
-  }
-
+async function sendSequenceEmail(prospectId: string, to: string, subject: string, text: string, proofUrl: string): Promise<boolean> {
   try {
-    const resend = new Resend(apiKey)
-    await resend.emails.send({
-      from: 'Paul @ CoGrow <paul@cogrow.ai>',
-      to: [to],
-      replyTo: 'paul@cogrow.ai',
+    const html = buildEmailHtml(text, buildTrackedUrl(prospectId, proofUrl))
+    await sendEmail({
+      to,
       subject,
       text,
       html,
+      from: 'Paul @ CoGrow <paul@cogrow.ai>',
+      replyTo: 'paul@cogrow.ai',
+      tags: [{ name: 'prospect_slug', value: prospectId }],
     })
     return true
   } catch (error) {
@@ -101,12 +90,7 @@ async function sendSms(to: string, body: string): Promise<boolean> {
   }
 }
 
-/**
- * POST /api/cron/sequence-runner
- * Called hourly by Vercel cron. Fires due sequence steps.
- */
 export async function POST(request: NextRequest) {
-  // Verify cron secret if set
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret) {
     const auth = request.headers.get('authorization')
@@ -119,7 +103,6 @@ export async function POST(request: NextRequest) {
   const templates = getSequenceSteps()
   const now = new Date().toISOString()
 
-  // Find all due steps: pending, scheduled <= now, parent sequence active
   const { data: dueSteps, error: stepsErr } = await supabase
     .from('sequence_steps')
     .select('id, sequence_id, step_number, channel, scheduled_at')
@@ -130,8 +113,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ processed: 0, message: dueSteps ? 'No due steps' : stepsErr?.message })
   }
 
-  // Get parent sequences
-  const sequenceIds = [...new Set(dueSteps.map(s => s.sequence_id))]
+  const sequenceIds = [...new Set(dueSteps.map((s) => s.sequence_id))]
   const { data: sequences } = await supabase
     .from('sequences')
     .select('id, prospect_id, status')
@@ -141,20 +123,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ processed: 0, message: 'No sequences found' })
   }
 
-  const activeSequences = new Map(
-    sequences.filter(s => s.status === 'active').map(s => [s.id, s])
-  )
-
-  // Get prospects for active sequences
-  const prospectIds = [...new Set(
-    sequences.filter(s => s.status === 'active').map(s => s.prospect_id)
-  )]
-  const { data: prospects } = await supabase
-    .from('prospects')
-    .select('*')
-    .in('id', prospectIds)
-
-  const prospectMap = new Map((prospects || []).map(p => [p.id, p]))
+  const activeSequences = new Map(sequences.filter((s) => s.status === 'active').map((s) => [s.id, s]))
+  const prospectIds = [...new Set(sequences.filter((s) => s.status === 'active').map((s) => s.prospect_id))]
+  const { data: prospects } = await supabase.from('prospects').select('*').in('id', prospectIds)
+  const prospectMap = new Map((prospects || []).map((p) => [p.id, p]))
 
   let processed = 0
   let autoStopped = 0
@@ -163,40 +135,29 @@ export async function POST(request: NextRequest) {
 
   for (const step of dueSteps) {
     const seq = activeSequences.get(step.sequence_id)
-    if (!seq) {
-      // Sequence not active — skip
-      continue
-    }
+    if (!seq) continue
 
     const prospect = prospectMap.get(seq.prospect_id)
     if (!prospect) continue
 
-    // AUTO-STOP CHECK
     const shouldStop =
       prospect.contact_status === 'replied' ||
       prospect.proof_viewed_at != null ||
       prospect.email_clicked_at != null
 
     if (shouldStop) {
-      // Stop the entire sequence
       await supabase.from('sequences').update({
         status: 'stopped',
         stopped_reason: 'prospect_engaged',
       }).eq('id', seq.id)
 
-      // Cancel all pending steps
-      await supabase.from('sequence_steps').update({
-        status: 'cancelled',
-      }).eq('sequence_id', seq.id).eq('status', 'pending')
+      await supabase.from('sequence_steps').update({ status: 'cancelled' }).eq('sequence_id', seq.id).eq('status', 'pending')
 
       await supabase.from('activity_log').insert({
         id: createId('activity'),
         prospect_id: seq.prospect_id,
         event_type: 'sequence_auto_stopped',
-        summary: `🛑 Sequence auto-stopped — prospect engaged (${
-          prospect.contact_status === 'replied' ? 'replied to SMS' :
-          prospect.proof_viewed_at ? 'viewed proof' : 'clicked email'
-        })`,
+        summary: `🛑 Sequence auto-stopped — prospect engaged (${prospect.contact_status === 'replied' ? 'replied to SMS' : prospect.proof_viewed_at ? 'viewed proof' : 'clicked email'})`,
       })
 
       activeSequences.delete(seq.id)
@@ -205,11 +166,9 @@ export async function POST(request: NextRequest) {
       continue
     }
 
-    // FIRE THE STEP
-    const template = templates.find(t => t.stepNumber === step.step_number)
+    const template = templates.find((t) => t.stepNumber === step.step_number)
     if (!template) continue
 
-    // Map DB row to Prospect shape for templates
     const p = {
       id: prospect.id,
       businessName: prospect.business_name,
@@ -224,7 +183,6 @@ export async function POST(request: NextRequest) {
 
     const proofUrl = getProofUrl(p)
     const message = template.getMessage(p, proofUrl)
-    const { openPixel, trackedProofUrl } = buildTrackedUrls(p.trackingToken, proofUrl)
 
     let success = false
 
@@ -232,8 +190,7 @@ export async function POST(request: NextRequest) {
       const email = prospect.email
       if (email) {
         const subject = template.getSubject?.(p) || `Update from CoGrow about ${prospect.business_name}`
-        const html = buildEmailHtml(message, trackedProofUrl, openPixel)
-        success = await sendEmail(email, subject, message, html)
+        success = await sendSequenceEmail(prospect.id, email, subject, message, proofUrl)
       } else {
         console.warn(`No email for prospect ${prospect.id} — skipping email step`)
       }
@@ -243,9 +200,7 @@ export async function POST(request: NextRequest) {
         sent_at: success ? new Date().toISOString() : null,
       }).eq('id', step.id)
 
-      await supabase.from('sequences').update({
-        current_step: step.step_number,
-      }).eq('id', seq.id)
+      await supabase.from('sequences').update({ current_step: step.step_number }).eq('id', seq.id)
 
       await supabase.from('activity_log').insert({
         id: createId('activity'),
@@ -261,7 +216,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (template.channel === 'sms') {
-      // Vercel does NOT send SMS anymore. Local worker picks up pending SMS steps.
       await supabase.from('activity_log').insert({
         id: createId('activity'),
         prospect_id: seq.prospect_id,
@@ -269,10 +223,7 @@ export async function POST(request: NextRequest) {
         summary: `📱 Step ${step.step_number + 1}/5 pending — waiting for local SMS worker (Day ${template.dayOffset})`,
       })
 
-      await supabase.from('sequences').update({
-        current_step: step.step_number,
-      }).eq('id', seq.id)
-
+      await supabase.from('sequences').update({ current_step: step.step_number }).eq('id', seq.id)
       processed++
       continue
     }
@@ -281,7 +232,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ processed, sent, failed, autoStopped })
 }
 
-// Also support GET for Vercel cron
 export async function GET(request: NextRequest) {
   return POST(request)
 }
