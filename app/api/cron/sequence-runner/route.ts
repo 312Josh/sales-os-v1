@@ -24,16 +24,16 @@ function escapeHtml(input: string) {
     .replace(/'/g, '&#39;')
 }
 
-function buildEmailHtml(text: string, trackedProofUrl: string) {
+function buildEmailHtml(text: string, prospectId: string, trackedProofUrl: string) {
   const escaped = escapeHtml(text)
   const htmlWithBreaks = escaped.replace(/\n/g, '<br />')
   const linked = htmlWithBreaks.replace(/https?:\/\/\S+/g, trackedProofUrl)
-  return addTrackingToHtml(`<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">${linked}</div>`, '')
+  return addTrackingToHtml(`<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">${linked}</div>`, prospectId)
 }
 
 async function sendSequenceEmail(prospectId: string, to: string, subject: string, text: string, proofUrl: string): Promise<boolean> {
   try {
-    const html = buildEmailHtml(text, buildTrackedUrl(prospectId, proofUrl))
+    const html = buildEmailHtml(text, prospectId, buildTrackedUrl(prospectId, proofUrl))
     await sendEmail({
       to,
       subject,
